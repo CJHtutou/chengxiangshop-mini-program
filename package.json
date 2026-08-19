@@ -1,0 +1,31 @@
+{
+  "name": "chengxiangshop-mini-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:h5": "uni -p h5 --port 5174",
+    "dev:mp-weixin": "uni -p mp-weixin",
+    "build:h5": "uni build -p h5",
+    "build:mp-weixin": "uni build -p mp-weixin",
+    "lint": "eslint src --max-warnings 0"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-4050720250324001",
+    "@dcloudio/uni-components": "3.0.0-4050720250324001",
+    "@dcloudio/uni-h5": "3.0.0-4050720250324001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-4050720250324001",
+    "@dcloudio/uni-ui": "^1.5.12",
+    "pinia": "^2.2.6",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.4.14",
+    "@dcloudio/vite-plugin-uni": "3.0.0-4050720250324001",
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-vue": "^9.32.0",
+    "globals": "^15.14.0",
+    "sass": "^1.83.4",
+    "vite": "^5.2.8"
+  }
+}
