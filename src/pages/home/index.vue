@@ -1,18 +1,19 @@
 <template>
   <view class="page-shell home-page">
-    <MallHeader title="老羊黑盘羊沉香" />
+    <MallHeader />
 
     <view class="home-top">
       <SearchBar v-model="keyword" @search="search" />
     </view>
+    <view v-if="loadError" class="network-state"><text>{{ loadError }}</text><button class="pressable" @click="loadHome">重试</button></view>
 
-    <swiper class="hero" circular autoplay :interval="4200" indicator-dots indicator-color="rgba(255,255,255,.45)" indicator-active-color="#d8ad6e">
+    <swiper v-if="slides.length" class="hero" circular autoplay :interval="4200" indicator-dots indicator-color="rgba(255,255,255,.45)" indicator-active-color="#d8ad6e">
       <swiper-item v-for="(slide, index) in slides" :key="index">
         <view class="hero__slide">
           <image class="hero__image" :src="slide.image" mode="aspectFill" />
           <view class="hero__scrim" />
           <view class="hero__content">
-            <text class="hero__eyebrow">ARGAL · 2006</text>
+            <text class="hero__eyebrow">{{ storeConfig.config.subtitle }}</text>
             <text class="hero__title">{{ slide.title }}</text>
             <text class="hero__copy">{{ slide.copy }}</text>
             <button class="hero__button pressable" @click="goProducts">探索香品</button>
@@ -53,7 +54,7 @@
       <image class="story-card__image" src="/static/images/hero-brand.jpg" mode="aspectFill" />
       <view class="story-card__scrim" />
       <view class="story-card__content">
-        <text class="story-card__eyebrow">黑盘羊沉香 · 始于 2006</text>
+        <text class="story-card__eyebrow">{{ storeConfig.storeName }} · 品牌故事</text>
         <text class="story-card__title">一炉真香，守住时间的味道</text>
         <text class="story-card__link">了解品牌历程 →</text>
       </view>
@@ -78,7 +79,8 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { onPullDownRefresh } from '@dcloudio/uni-app'
 import BottomNav from '../../components/BottomNav.vue'
 import CouponModal from '../../components/CouponModal.vue'
 import FloatingService from '../../components/FloatingService.vue'
@@ -86,12 +88,15 @@ import MallHeader from '../../components/MallHeader.vue'
 import ProductCard from '../../components/ProductCard.vue'
 import SearchBar from '../../components/SearchBar.vue'
 import { getHomeData } from '../../api/mall.js'
+import { useStoreConfigStore } from '../../stores/store-config.js'
 
 const keyword = ref('')
 const categories = ref([])
 const products = ref([])
 const showCoupon = ref(false)
-const slides = [
+const loadError = ref('')
+const storeConfig = useStoreConfigStore()
+const fallbackSlides = [
   {
     image: '/static/images/hero-brand.jpg',
     title: '老羊黑盘羊沉香',
@@ -108,15 +113,24 @@ const slides = [
     copy: '从原材到成品，严守每一道工序'
   }
 ]
+const slides = computed(() => storeConfig.config.banners?.length ? storeConfig.config.banners.map((item) => ({ image: item.image, title: item.title || storeConfig.storeName, copy: item.subtitle || storeConfig.config.description, linkType: item.linkType, linkTarget: item.linkTarget })) : fallbackSlides)
 
+async function loadHome(force = false) {
+  loadError.value = ''
+  try {
+    if (force) await storeConfig.load(true)
+    const { data } = await getHomeData()
+    categories.value = data.categories
+    products.value = data.products.slice(0, 6)
+  } catch (error) { loadError.value = error.message || '网络异常，请稍后重试' }
+}
 onMounted(async () => {
-  const { data } = await getHomeData()
-  categories.value = data.categories
-  products.value = data.products.slice(0, 6)
+  await loadHome()
   setTimeout(() => {
     if (!uni.getStorageSync('coupon-seen')) showCoupon.value = true
   }, 500)
 })
+onPullDownRefresh(async () => { await loadHome(true); uni.stopPullDownRefresh() })
 
 function search() {
   uni.navigateTo({ url: `/pages/products/index?keyword=${encodeURIComponent(keyword.value)}` })
@@ -138,6 +152,8 @@ function claimCoupon() {
 <style scoped lang="scss">
 .home-page { background: #f5f5f3; }
 .home-top { padding: 18rpx 22rpx 22rpx; background: #f5f5f3; }
+.network-state { display: flex; min-height: 80rpx; align-items: center; justify-content: space-between; padding: 14rpx 22rpx; background: #fff2f1; color: #a53b35; font-size: 23rpx; }
+.network-state button { width: 120rpx; height: 58rpx; margin: 0; border: 1rpx solid #c85b54; border-radius: 29rpx; background: #fff; color: #a53b35; font-size: 22rpx; line-height: 56rpx; }
 .hero { height: 660rpx; }
 .hero__slide { position: relative; height: 100%; overflow: hidden; background: #0d2f2b; }
 .hero__image { width: 100%; height: 100%; }

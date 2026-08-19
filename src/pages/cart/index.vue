@@ -46,14 +46,16 @@
 </template>
 
 <script setup>
-import { products } from '../../mock/index.js'
+import { onMounted, ref } from 'vue'
+import { getProducts } from '../../api/mall.js'
 import BottomNav from '../../components/BottomNav.vue'
 import MallHeader from '../../components/MallHeader.vue'
 import ProductCard from '../../components/ProductCard.vue'
 import { useCartStore } from '../../stores/cart.js'
 
 const cart = useCartStore()
-const recommendations = products.slice(2, 6)
+const recommendations = ref([])
+onMounted(async () => { try { const { data } = await getProducts({ page: 1, pageSize: 4, sort: 'sold' }); recommendations.value = data.items } catch { recommendations.value = [] } })
 
 function openProduct(id) { uni.navigateTo({ url: `/pages/product-detail/index?id=${id}` }) }
 function goProducts() { uni.navigateTo({ url: '/pages/products/index' }) }

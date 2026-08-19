@@ -4,8 +4,13 @@
 
 <script setup>
 import MallHeader from '../../components/MallHeader.vue'
-const items = [{ label: '账号与安全', value: '' }, { label: '消息通知', value: '已开启' }, { label: '隐私设置', value: '' }, { label: '关于黑盘羊', value: 'v1.0.0' }]
-function logout() { uni.showModal({ title: '退出登录', content: '确认退出当前账号吗？', success: ({ confirm }) => { if (confirm) uni.reLaunch({ url: '/pages/home/index' }) } }) }
+import { computed } from 'vue'
+import { useAuthStore } from '../../stores/auth.js'
+import { useStoreConfigStore } from '../../stores/store-config.js'
+const auth = useAuthStore()
+const storeConfig = useStoreConfigStore()
+const items = computed(() => [{ label: '账号与安全', value: '' }, { label: '消息通知', value: '已开启' }, { label: '隐私设置', value: '' }, { label: `关于${storeConfig.storeName}`, value: 'v1.0.0' }])
+function logout() { uni.showModal({ title: '退出登录', content: '确认退出当前账号吗？', success: ({ confirm }) => { if (confirm) { auth.logout(); uni.reLaunch({ url: '/pages/home/index' }) } } }) }
 </script>
 
 <style scoped lang="scss">

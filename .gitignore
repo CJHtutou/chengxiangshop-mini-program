@@ -5,3 +5,4 @@ unpackage/
 .DS_Store
 .idea/
 .vscode/
+test-results/

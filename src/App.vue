@@ -1,7 +1,8 @@
 <script>
+import { useStoreConfigStore } from './stores/store-config.js'
 export default {
   onLaunch() {
-    console.info('黑盘羊沉香商城启动')
+    useStoreConfigStore().load()
   }
 }
 </script>

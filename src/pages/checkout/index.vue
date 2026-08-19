@@ -3,19 +3,19 @@
     <MallHeader title="确认订单" :show-back="true" />
     <view class="address-card pressable" @click="goAddress">
       <view class="address-card__icon"><uni-icons type="location" size="25" color="#9b7038" /></view>
-      <view class="address-card__copy"><view><text class="address-card__name">林墨</text><text class="address-card__phone">138****2268</text></view><text class="address-card__detail">广东省广州市白云区同德街道 西城智汇 Park 7栋</text></view>
+      <view class="address-card__copy"><view><text class="address-card__name">{{ address?.receiverName || '请选择收货地址' }}</text><text class="address-card__phone">{{ address?.phone || '' }}</text></view><text class="address-card__detail">{{ address ? `${address.province}${address.city}${address.district}${address.detail}` : '点击选择收货地址' }}</text></view>
       <uni-icons type="right" size="18" color="#a1a6a3" />
     </view>
     <view class="address-card__line" />
 
     <view class="order-card">
-      <view class="order-card__brand"><view class="order-card__mark">羊</view><text>黑盘羊沉香堂</text></view>
+      <view class="order-card__brand"><view class="order-card__mark">{{ storeConfig.storeMark }}</view><text>{{ storeConfig.storeName }}</text></view>
       <view v-for="item in selectedItems" :key="`${item.id}-${item.sku}`" class="order-product">
         <image :src="item.image" mode="aspectFill" />
         <view class="order-product__body"><text class="order-product__title">{{ item.shortTitle || item.title }}</text><text class="order-product__sku">{{ item.sku }}</text><view><text class="order-product__price">¥{{ item.price }}</text><text class="order-product__qty">×{{ item.quantity }}</text></view></view>
       </view>
-      <view class="order-row pressable"><text>配送方式</text><text>顺丰快递 · ¥0 <uni-icons type="right" size="15" color="#a0a5a3" /></text></view>
-      <view class="order-row pressable"><text>店铺优惠</text><text class="order-row__accent">满1000减100 <uni-icons type="right" size="15" color="#a0a5a3" /></text></view>
+      <view class="order-row pressable"><text>配送方式</text><text>{{ storeConfig.config.defaultCarrier || '快递配送' }} · ¥{{ (storeConfig.config.defaultShippingCents / 100).toFixed(2) }} <uni-icons type="right" size="15" color="#a0a5a3" /></text></view>
+      <view class="order-row pressable"><text>店铺优惠</text><text class="order-row__accent">由服务端结算 <uni-icons type="right" size="15" color="#a0a5a3" /></text></view>
       <view class="order-row"><text>订单备注</text><input v-model="note" placeholder="选填，请先和商家协商一致" /></view>
       <view class="order-card__total">共 {{ cart.selectedCount }} 件，合计 <text>¥{{ payable.toFixed(2) }}</text></view>
     </view>
@@ -34,25 +34,35 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import MallHeader from '../../components/MallHeader.vue'
 import { useCartStore } from '../../stores/cart.js'
+import { confirmSandboxPayment, createOrder, createPayment, fetchAddresses } from '../../api/mall.js'
+import { useAuthStore } from '../../stores/auth.js'
+import { useStoreConfigStore } from '../../stores/store-config.js'
 
 const cart = useCartStore()
+const auth = useAuthStore()
+const storeConfig = useStoreConfigStore()
+const address = ref(null)
 const note = ref('')
 const payment = ref('wechat')
 const submitting = ref(false)
 const selectedItems = computed(() => cart.selectedItems.length ? cart.selectedItems : cart.items)
-const payable = computed(() => Math.max(0, cart.totalPrice - (cart.totalPrice >= 1000 ? 100 : 0)))
+const payable = computed(() => cart.totalPrice)
+onMounted(async () => { try { if (!auth.authenticated) await auth.login(); const { data } = await fetchAddresses(); address.value = data.find((item) => item.isDefault) || data[0] || null } catch (error) { uni.showToast({ title: error.message || '地址加载失败', icon: 'none' }) } })
 
 function goAddress() { uni.navigateTo({ url: '/pages/address/index' }) }
-function submit() {
+async function submit() {
   if (!selectedItems.value.length) return uni.showToast({ title: '购物车暂无商品', icon: 'none' })
+  if (!address.value) return uni.showToast({ title: '请先添加收货地址', icon: 'none' })
   submitting.value = true
-  setTimeout(() => {
-    submitting.value = false
-    uni.showModal({ title: '支付成功', content: '订单已创建，商家将尽快为您备货。', showCancel: false, success: () => { cart.clearSelected(); uni.redirectTo({ url: '/pages/orders/index?status=to_ship' }) } })
-  }, 700)
+  try {
+    const { data: order } = await createOrder({ addressId: address.value.id, items: selectedItems.value.map((item) => ({ productId: item.id, skuId: item.skuId || null, quantity: item.quantity })), idempotencyKey: `mini-${Date.now()}-${Math.random().toString(36).slice(2)}` })
+    const { data: payment } = await createPayment(order.id)
+    uni.showModal({ title: '模拟支付', content: `应付 ¥${((payment.amountCents || order.totalCents || cart.totalPriceCents) / 100).toFixed(2)}，确认完成沙箱支付吗？`, confirmText: '确认支付', success: async ({ confirm }) => { if (!confirm) return; try { await confirmSandboxPayment(payment.paymentId || payment.id); cart.clearSelected(); uni.redirectTo({ url: '/pages/orders/index?status=to_ship' }) } catch (error) { uni.showToast({ title: error.message || '支付失败', icon: 'none' }) } } })
+  } catch (error) { uni.showToast({ title: error.message || '订单创建失败', icon: 'none' }) }
+  finally { submitting.value = false }
 }
 </script>
 

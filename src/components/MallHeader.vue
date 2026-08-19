@@ -7,7 +7,7 @@
       <view v-else class="header__action pressable" @click="goHome">
         <uni-icons type="home" size="24" color="#171b1a" />
       </view>
-      <text class="header__title">{{ title }}</text>
+      <text class="header__title">{{ displayTitle }}</text>
       <view class="header__capsule">
         <uni-icons type="more-filled" size="20" color="#171b1a" />
         <view class="header__divider" />
@@ -18,10 +18,15 @@
 </template>
 
 <script setup>
-defineProps({
-  title: { type: String, default: '黑盘羊沉香' },
+import { computed } from 'vue'
+import { useStoreConfigStore } from '../stores/store-config.js'
+
+const props = defineProps({
+  title: { type: String, default: '' },
   showBack: { type: Boolean, default: false }
 })
+const storeConfig = useStoreConfigStore()
+const displayTitle = computed(() => props.title || storeConfig.storeName)
 
 function back() {
   const pages = getCurrentPages()

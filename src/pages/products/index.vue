@@ -35,6 +35,8 @@
     <view v-else-if="filteredProducts.length" class="product-grid">
       <ProductCard v-for="product in filteredProducts" :key="product.id" :product="product" />
     </view>
+    <view v-if="loadError" class="error-state"><text>{{ loadError }}</text><button class="pressable" @click="loadProducts(true)">重试</button></view>
+    <view v-else-if="filteredProducts.length" class="load-more">{{ hasMore ? '上拉加载更多' : '已经到底了' }}</view>
     <view v-else class="empty-state">
       <uni-icons type="search" size="50" color="#c5c9c7" />
       <text>没有找到相关香品</text>
@@ -46,21 +48,23 @@
 </template>
 
 <script setup>
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 import { ref } from 'vue'
-import { categories as mockCategories } from '../../mock/index.js'
-import { getProducts } from '../../api/mall.js'
+import { getCategories, getProducts } from '../../api/mall.js'
 import BottomNav from '../../components/BottomNav.vue'
 import MallHeader from '../../components/MallHeader.vue'
 import ProductCard from '../../components/ProductCard.vue'
 import SearchBar from '../../components/SearchBar.vue'
 
-const categories = mockCategories
+const categories = ref([{ id: 'all', name: '全部商品' }])
 const keyword = ref('')
 const categoryId = ref('all')
 const sort = ref('default')
 const loading = ref(true)
 const filteredProducts = ref([])
+const loadError = ref('')
+const page = ref(1)
+const hasMore = ref(true)
 const sortItems = [
   { label: '综合', value: 'default' },
   { label: '销量', value: 'sales' },
@@ -73,30 +77,38 @@ onLoad((options) => {
   categoryId.value = options.category || 'all'
   loadProducts()
 })
+onPullDownRefresh(async () => { await loadProducts(true); uni.stopPullDownRefresh() })
+onReachBottom(() => { if (!loading.value && hasMore.value) { page.value += 1; loadProducts(false) } })
 
-async function loadProducts() {
+async function loadProducts(resetList = true) {
   loading.value = true
-  const { data } = await getProducts({ keyword: keyword.value, categoryId: categoryId.value, sort: sort.value })
-  filteredProducts.value = data
-  loading.value = false
+  loadError.value = ''
+  if (resetList) page.value = 1
+  try {
+    if (categories.value.length === 1) { const result = await getCategories(); categories.value = [{ id: 'all', name: '全部商品' }, ...result.data] }
+    const { data } = await getProducts({ page: page.value, pageSize: 10, keyword: keyword.value, categoryId: categoryId.value === 'all' ? '' : categoryId.value, sort: sort.value === 'default' ? 'sort' : sort.value === 'sales' ? 'sold' : sort.value })
+    filteredProducts.value = resetList ? data.items : [...filteredProducts.value, ...data.items]
+    hasMore.value = page.value < (data.pagination?.pages || 1)
+  } catch (error) { loadError.value = error.message || '商品加载失败' }
+  finally { loading.value = false }
 }
 
 function selectCategory(id) {
   categoryId.value = id
-  loadProducts()
+  loadProducts(true)
 }
 
 function setSort(value) {
   if (value === 'price') sort.value = sort.value === 'priceAsc' ? 'priceDesc' : 'priceAsc'
   else sort.value = value
-  loadProducts()
+  loadProducts(true)
 }
 
 function reset() {
   keyword.value = ''
   categoryId.value = 'all'
   sort.value = 'default'
-  loadProducts()
+  loadProducts(true)
 }
 </script>
 
@@ -119,5 +131,8 @@ function reset() {
 .empty-state { display: flex; min-height: 640rpx; flex-direction: column; align-items: center; justify-content: center; color: #929895; font-size: 27rpx; }
 .empty-state > text { margin-top: 20rpx; }
 .empty-state__button { width: 220rpx; height: 72rpx; margin-top: 32rpx; border-radius: 36rpx; background: #e43a35; color: #fff; font-size: 26rpx; line-height: 72rpx; }
+.load-more { padding: 20rpx 0 34rpx; color: #9ca29f; font-size: 22rpx; text-align: center; }
+.error-state { display: flex; flex-direction: column; align-items: center; gap: 20rpx; padding: 70rpx 20rpx; color: #a53b35; font-size: 24rpx; }
+.error-state button { width: 180rpx; height: 66rpx; border-radius: 33rpx; background: #e43a35; color: #fff; font-size: 24rpx; line-height: 66rpx; }
 @keyframes loading { to { background-position: -200% 0; } }
 </style>

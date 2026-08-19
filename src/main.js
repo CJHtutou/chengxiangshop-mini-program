@@ -5,6 +5,7 @@ import './styles/theme.scss'
 
 export function createApp() {
   const app = createSSRApp(App)
-  app.use(createPinia())
-  return { app }
+  const pinia = createPinia()
+  app.use(pinia)
+  return { app, pinia }
 }

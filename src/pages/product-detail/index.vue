@@ -3,7 +3,7 @@
     <MallHeader title="商品详情" :show-back="true" />
     <swiper class="gallery" circular indicator-dots indicator-color="rgba(255,255,255,.55)" indicator-active-color="#e43a35">
       <swiper-item v-for="image in product.gallery" :key="image">
-        <image class="gallery__image" :src="image" mode="aspectFill" />
+        <image class="gallery__image" :src="image" mode="aspectFill" @error="imageError(image)" />
       </swiper-item>
     </swiper>
 
@@ -31,17 +31,17 @@
     </view>
 
     <view class="brand-card">
-      <view class="brand-card__mark">羊</view>
+      <view class="brand-card__mark"><image v-if="storeConfig.config.iconUrl || storeConfig.config.logoUrl" :src="storeConfig.config.iconUrl || storeConfig.config.logoUrl" mode="aspectFill" /><text v-else>{{ storeConfig.storeMark }}</text></view>
       <view class="brand-card__copy">
-        <text class="brand-card__name">黑盘羊沉香堂</text>
-        <text class="brand-card__meta">19年专注天然沉香 · 广州实体店</text>
+        <text class="brand-card__name">{{ storeConfig.storeName }}</text>
+        <text class="brand-card__meta">{{ storeConfig.config.subtitle }} · {{ storeConfig.config.serviceHours || '在线商城' }}</text>
       </view>
       <button class="brand-card__button pressable" @click="goBrand">进店</button>
     </view>
 
     <view class="description">
       <view class="description__heading"><text>商品详情</text><text>香材与工艺</text></view>
-      <image class="description__hero" :src="product.gallery[1]" mode="aspectFill" />
+      <image class="description__hero" :src="product.gallery[1] || product.gallery[0]" mode="aspectFill" />
       <text class="description__title">天然香韵，缓慢舒展</text>
       <text class="description__copy">{{ product.description }}</text>
       <view class="description__feature-grid">
@@ -85,6 +85,7 @@ import { ref } from 'vue'
 import { getProductDetail } from '../../api/mall.js'
 import MallHeader from '../../components/MallHeader.vue'
 import { useCartStore } from '../../stores/cart.js'
+import { useStoreConfigStore } from '../../stores/store-config.js'
 
 const product = ref(null)
 const showSku = ref(false)
@@ -93,10 +94,11 @@ const quantity = ref(1)
 const action = ref('cart')
 const skuOptions = ['标准收藏装', '礼赠雅盒', '藏家编号款']
 const cart = useCartStore()
+const storeConfig = useStoreConfigStore()
 
 onLoad(async ({ id }) => {
-  const { data } = await getProductDetail(id)
-  product.value = data
+  try { const { data } = await getProductDetail(id); product.value = data }
+  catch (error) { uni.showModal({ title: '加载失败', content: error.message || '商品信息加载失败', showCancel: false, success: () => uni.navigateBack() }) }
 })
 
 function openSku(type) {
@@ -113,6 +115,7 @@ function confirmSku() {
 function goHome() { uni.reLaunch({ url: '/pages/home/index' }) }
 function goBrand() { uni.navigateTo({ url: '/pages/brand/index' }) }
 function goCart() { uni.navigateTo({ url: '/pages/cart/index' }) }
+function imageError(image) { if (!product.value) return; product.value.gallery = product.value.gallery.map((item) => item === image ? '/static/images/product-incense.jpg' : item) }
 </script>
 
 <style scoped lang="scss">
@@ -135,6 +138,7 @@ function goCart() { uni.navigateTo({ url: '/pages/cart/index' }) }
 .detail-panel__value { min-width: 0; flex: 1; color: #303633; font-size: 25rpx; }
 .brand-card { display: flex; align-items: center; margin-top: 16rpx; padding: 26rpx; background: #fff; }
 .brand-card__mark { display: flex; width: 86rpx; height: 86rpx; align-items: center; justify-content: center; border-radius: 8rpx; background: #0d2f2b; color: #dbb873; font-family: "STKaiti", serif; font-size: 44rpx; }
+.brand-card__mark image { width: 100%; height: 100%; border-radius: 8rpx; }
 .brand-card__copy { display: flex; min-width: 0; flex: 1; flex-direction: column; margin-left: 18rpx; }
 .brand-card__name { font-size: 29rpx; font-weight: 600; }
 .brand-card__meta { margin-top: 7rpx; color: #8a908d; font-size: 21rpx; }

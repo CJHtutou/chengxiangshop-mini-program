@@ -1,6 +1,6 @@
 <template>
   <view class="page-shell page-shell--plain brand-page">
-    <MallHeader title="黑盘羊品牌历程" />
+    <MallHeader :title="`${storeConfig.storeName}品牌历程`" />
     <view class="brand-search"><SearchBar v-model="keyword" @search="search" /></view>
 
     <view class="founder">
@@ -8,7 +8,7 @@
       <view class="founder__scrim" />
       <view class="founder__content">
         <text class="founder__name">老羊</text>
-        <text class="founder__role">黑盘羊沉香创始人</text>
+        <text class="founder__role">{{ storeConfig.storeName }}创始人</text>
         <text class="founder__copy">高端奇楠 / 沉香收藏家\n惠州市香文化协会执行会长\n上合组织传统香文化讲师</text>
         <text class="founder__quote">“不追逐短暂的热闹，只认真做好每一炉香。”</text>
       </view>
@@ -30,11 +30,12 @@
     </view>
 
     <view class="brand-footer">
-      <text class="brand-footer__mark">黑盘羊</text>
-      <text class="brand-footer__en">ARGAL 2006</text>
-      <text class="brand-footer__slogan">专注野生沉香十九年</text>
-      <text class="brand-footer__address">广州黑盘羊总部 · 白云区同德街道西城智汇</text>
-      <text class="brand-footer__phone">联系电话：15625056161</text>
+      <image v-if="storeConfig.config.logoUrl" class="brand-footer__logo" :src="storeConfig.config.logoUrl" mode="aspectFit" />
+      <text class="brand-footer__mark">{{ storeConfig.storeName }}</text>
+      <text class="brand-footer__en">{{ storeConfig.config.subtitle }}</text>
+      <text class="brand-footer__slogan">{{ storeConfig.config.description }}</text>
+      <text v-if="storeConfig.config.address" class="brand-footer__address">{{ storeConfig.config.address }}</text>
+      <text v-if="storeConfig.config.phone" class="brand-footer__phone">联系电话：{{ storeConfig.config.phone }}</text>
     </view>
 
     <FloatingService />
@@ -48,8 +49,10 @@ import BottomNav from '../../components/BottomNav.vue'
 import FloatingService from '../../components/FloatingService.vue'
 import MallHeader from '../../components/MallHeader.vue'
 import SearchBar from '../../components/SearchBar.vue'
+import { useStoreConfigStore } from '../../stores/store-config.js'
 
 const keyword = ref('')
+const storeConfig = useStoreConfigStore()
 const history = [
   { year: '2006', title: '因香结缘', copy: '从一块海南老料开始，建立以真实产区和自然香韵为核心的收藏标准。' },
   { year: '2012', title: '走访产区', copy: '深入海南、惠安与加里曼丹等传统产区，建立稳定、可追溯的原材渠道。' },
@@ -85,6 +88,7 @@ function search() {
 .timeline__copy { display: block; margin-top: 10rpx; color: #686f6c; font-size: 24rpx; line-height: 40rpx; }
 .brand-footer { display: flex; flex-direction: column; align-items: center; padding: 82rpx 30rpx 70rpx; background: #0d3b34; color: #dbba7c; }
 .brand-footer__mark { font-family: "STKaiti", serif; font-size: 58rpx; font-weight: 700; }
+.brand-footer__logo { width: 120rpx; height: 120rpx; margin-bottom: 20rpx; }
 .brand-footer__en { margin-top: 6rpx; font-size: 19rpx; letter-spacing: 4rpx; }
 .brand-footer__slogan { margin-top: 32rpx; font-size: 28rpx; letter-spacing: 2rpx; }
 .brand-footer__address, .brand-footer__phone { margin-top: 32rpx; font-size: 21rpx; text-align: center; }

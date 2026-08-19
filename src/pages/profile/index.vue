@@ -4,12 +4,12 @@
     <view class="profile-hero">
       <view class="profile-hero__texture" />
       <view class="profile-user">
-        <view class="profile-user__avatar">林</view>
-        <view class="profile-user__copy"><text class="profile-user__greet">点击登录查看会员权益</text><text class="profile-user__hint">登录后订单管理更轻松，优惠信息不错过</text></view>
-        <button class="profile-user__login pressable" @click="login">登录</button>
+        <view class="profile-user__avatar">{{ auth.user?.nickname?.slice(0, 1) || storeConfig.storeMark }}</view>
+        <view class="profile-user__copy"><text class="profile-user__greet">{{ auth.authenticated ? auth.user.nickname : '点击登录查看会员权益' }}</text><text class="profile-user__hint">登录后订单管理更轻松，优惠信息不错过</text></view>
+        <button v-if="!auth.authenticated" class="profile-user__login pressable" @click="login">登录</button>
       </view>
       <view class="member-card">
-        <view><text class="member-card__name">老羊黑盘羊沉香</text><text class="member-card__meta">香事会员 · 会员日享专属礼遇</text></view>
+        <view><text class="member-card__name">{{ storeConfig.storeName }}</text><text class="member-card__meta">{{ storeConfig.config.subtitle }} · 会员日享专属礼遇</text></view>
         <uni-icons type="right" size="20" color="#ecd2a3" />
       </view>
     </view>
@@ -38,6 +38,11 @@
 import BottomNav from '../../components/BottomNav.vue'
 import FloatingService from '../../components/FloatingService.vue'
 import MallHeader from '../../components/MallHeader.vue'
+import { useAuthStore } from '../../stores/auth.js'
+import { useStoreConfigStore } from '../../stores/store-config.js'
+
+const auth = useAuthStore()
+const storeConfig = useStoreConfigStore()
 
 const assets = [
   { label: '余额', value: '-' },
@@ -60,7 +65,7 @@ const menus = [
   { label: '设置', icon: 'settings', url: '/pages/settings/index' }
 ]
 
-function login() { uni.showToast({ title: '登录功能已接入模拟态', icon: 'none' }) }
+async function login() { try { await auth.login(); uni.showToast({ title: '登录成功', icon: 'success' }) } catch (error) { uni.showToast({ title: error.message || '登录失败', icon: 'none' }) } }
 function goOrders(status = '') { uni.navigateTo({ url: `/pages/orders/index${status ? `?status=${status}` : ''}` }) }
 function goMenu(item) { if (item.url) uni.navigateTo({ url: item.url }); else uni.showToast({ title: '今日任务已完成', icon: 'success' }) }
 </script>
