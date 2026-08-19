@@ -64,13 +64,18 @@ git add .
 git commit -m "feat: build chengxiangshop mini program"
 git branch -M main
 git remote add origin https://gitee.com/Cjhtutou/chengxiangshop-mini-program.git
+git remote add github https://github.com/CJHtutou/chengxiangshop-mini-program.git
 git push -u origin main
+git push -u github main
 ```
 
 本项目目录已完成初始化、提交和远端关联。配置好 Gitee 凭据后，只需执行：
 
 ```bash
 git push -u origin main
+git push -u github main
 ```
+
+其中 `origin` 对应 Gitee，`github` 对应 GitHub；两边都推送成功后即可保持双仓库同步。
 
 如果远端仓库已有提交，先执行 `git pull --rebase origin main`，解决冲突后再推送；不要使用强制推送覆盖远端历史。
