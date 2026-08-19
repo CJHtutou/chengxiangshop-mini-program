@@ -5,7 +5,7 @@
     <view class="detail-address"><uni-icons type="location" size="24" color="#a47a42" /><view><text>林墨 138****2268</text><text>广东省广州市白云区同德街道 西城智汇 Park 7栋</text></view></view>
     <view class="detail-order-card"><view class="detail-order-card__head"><text>{{ storeConfig.storeName }}</text><text>{{ order.items }} 件商品</text></view><view v-for="item in order.itemsData?.length ? order.itemsData : [{ image: '/static/images/product-car.jpg', title: '天然沉香收藏香品' }]" :key="item.title" class="detail-order-product"><image :src="item.image || '/static/images/product-incense.jpg'" mode="aspectFill" /><view><text>{{ item.title }}</text><text>标准收藏装 × {{ order.items }}</text><text>¥{{ order.amount.toFixed(2) }}</text></view></view><view class="detail-order-total">商品总价 <text>¥{{ order.amount.toFixed(2) }}</text></view></view>
     <view class="info-card"><view><text>订单编号</text><text>{{ order.id }}</text></view><view><text>创建时间</text><text>{{ order.createdAt }}</text></view><view><text>支付方式</text><text>微信支付</text></view></view>
-    <view class="detail-actions"><button class="pressable">联系客服</button><button class="detail-actions__primary pressable" @click="contact">查看物流</button></view>
+    <view class="detail-actions"><button class="pressable" @click="afterSales">申请售后</button><button class="detail-actions__primary pressable" @click="contact">查看物流</button></view>
   </view>
 </template>
 
@@ -20,6 +20,7 @@ const order = ref({ status: '加载中', statusKey: 'to_ship', amount: 0, items:
 const storeConfig = useStoreConfigStore()
 onLoad(async ({ id }) => { try { order.value = (await getOrderDetail(id)).data } catch (error) { uni.showToast({ title: error.message || '订单加载失败', icon: 'none' }) } })
 function contact() { uni.showToast({ title: '物流信息已更新', icon: 'success' }) }
+function afterSales() { uni.navigateTo({ url: '/pages/after-sales/index' }) }
 </script>
 
 <style scoped lang="scss">

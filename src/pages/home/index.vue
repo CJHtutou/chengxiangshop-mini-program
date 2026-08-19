@@ -10,7 +10,7 @@
     <swiper v-if="slides.length" class="hero" circular autoplay :interval="4200" indicator-dots indicator-color="rgba(255,255,255,.45)" indicator-active-color="#d8ad6e">
       <swiper-item v-for="(slide, index) in slides" :key="index">
         <view class="hero__slide">
-          <image class="hero__image" :src="slide.image" mode="aspectFill" />
+          <image class="hero__image" :src="slide.image" mode="aspectFill" @error="slide.image = '/static/images/hero-brand.jpg'" />
           <view class="hero__scrim" />
           <view class="hero__content">
             <text class="hero__eyebrow">{{ storeConfig.config.subtitle }}</text>
@@ -99,7 +99,7 @@ const storeConfig = useStoreConfigStore()
 const fallbackSlides = [
   {
     image: '/static/images/hero-brand.jpg',
-    title: '老羊黑盘羊沉香',
+    title: '黑盘羊沉香',
     copy: '专注野生沉香 19 年 · 每一缕香都有出处'
   },
   {

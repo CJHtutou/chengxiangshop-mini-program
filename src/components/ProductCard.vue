@@ -1,6 +1,6 @@
 <template>
   <view class="product-card pressable" @click="openDetail">
-    <image class="product-card__image" :src="product.image" mode="aspectFill" lazy-load />
+    <image class="product-card__image" :src="imageSrc" mode="aspectFill" lazy-load @error="imageFailed = true" />
     <view class="product-card__body">
       <text class="product-card__title">{{ product.title }}</text>
       <text class="product-card__rank">{{ product.rank }}</text>
@@ -19,10 +19,13 @@
 </template>
 
 <script setup>
+import { computed, ref } from 'vue'
 import { useCartStore } from '../stores/cart.js'
 
 const props = defineProps({ product: { type: Object, required: true } })
 const cart = useCartStore()
+const imageFailed = ref(false)
+const imageSrc = computed(() => imageFailed.value ? '/static/images/product-wood.jpg' : props.product.image)
 
 function formatPrice(price) {
   return Number.isInteger(price) ? price : price.toFixed(1)

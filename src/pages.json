@@ -15,6 +15,7 @@
     { "path": "pages/checkout/index", "style": { "navigationStyle": "custom" } },
     { "path": "pages/orders/index", "style": { "navigationStyle": "custom" } },
     { "path": "pages/order-detail/index", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/after-sales/index", "style": { "navigationStyle": "custom" } },
     { "path": "pages/address/index", "style": { "navigationStyle": "custom" } },
     { "path": "pages/settings/index", "style": { "navigationStyle": "custom" } }
   ],
