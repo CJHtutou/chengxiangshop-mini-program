@@ -1,5 +1,3 @@
-const imageBase = 'https://images.unsplash.com/'
-
 export const categories = [
   { id: 'all', name: '全部商品', icon: 'shop' },
   { id: 'raw', name: '原材沉香', icon: 'flag' },
@@ -20,10 +18,10 @@ export const products = [
     rank: '本店销量榜第1',
     tag: '沉水级',
     stock: 88,
-    image: imageBase + 'photo-1602523961358-f9f03dd557db?auto=format&fit=crop&w=900&q=85',
+    image: '/static/images/product-car.jpg',
     gallery: [
-      imageBase + 'photo-1602523961358-f9f03dd557db?auto=format&fit=crop&w=1200&q=85',
-      imageBase + 'photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=1200&q=85'
+      '/static/images/product-car.jpg',
+      '/static/images/hero-brand.jpg'
     ],
     description: '选自海南与东南亚优质沉香原材，香气清甜内敛，适合日常佩戴与车内熏香。'
   },
@@ -38,10 +36,10 @@ export const products = [
     rank: '本店人气榜第3',
     tag: '老料',
     stock: 16,
-    image: imageBase + 'photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=900&q=85',
+    image: '/static/images/product-bracelet.jpg',
     gallery: [
-      imageBase + 'photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=85',
-      imageBase + 'photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1200&q=85'
+      '/static/images/product-bracelet.jpg',
+      '/static/images/product-hand.jpg'
     ],
     description: '自然油线与深色木质纹理交织，每一颗珠子都经过手工修圆和多次抛光。'
   },
@@ -56,10 +54,10 @@ export const products = [
     rank: '本店销量榜第9',
     tag: '预售',
     stock: 42,
-    image: imageBase + 'photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=900&q=85',
+    image: '/static/images/product-oil.jpg',
     gallery: [
-      imageBase + 'photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=85',
-      imageBase + 'photo-1611085583191-a3b181a88401?auto=format&fit=crop&w=1200&q=85'
+      '/static/images/product-oil.jpg',
+      '/static/images/product-incense.jpg'
     ],
     description: '一滴入香，幽香持久。礼盒内含沉香精油、香插与品牌收藏卡，适合送礼。'
   },
@@ -74,10 +72,10 @@ export const products = [
     rank: '本店销量榜第2',
     tag: '回流老料',
     stock: 30,
-    image: imageBase + 'photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=900&q=85',
+    image: '/static/images/product-hand.jpg',
     gallery: [
-      imageBase + 'photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1200&q=85',
-      imageBase + 'photo-1528459105426-b9548367069b?auto=format&fit=crop&w=1200&q=85'
+      '/static/images/product-hand.jpg',
+      '/static/images/product-bracelet.jpg'
     ],
     description: '纹理细密，檀香温润。精选台湾回流老料，佩戴后香气随体温慢慢舒展。'
   },
@@ -92,10 +90,10 @@ export const products = [
     rank: '新品榜第4',
     tag: '日常香事',
     stock: 120,
-    image: imageBase + 'photo-1603006905003-be475563bc59?auto=format&fit=crop&w=900&q=85',
+    image: '/static/images/product-incense.jpg',
     gallery: [
-      imageBase + 'photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1200&q=85',
-      imageBase + 'photo-1603905179139-db12ab5353d0?auto=format&fit=crop&w=1200&q=85'
+      '/static/images/product-incense.jpg',
+      '/static/images/hero-brand.jpg'
     ],
     description: '自然香材研磨成粉，低温成香，燃烧平稳，适合晨起、阅读与茶席。'
   },
@@ -110,10 +108,10 @@ export const products = [
     rank: '本店新品榜第8',
     tag: '收藏级',
     stock: 21,
-    image: imageBase + 'photo-1545241047-6083a3684587?auto=format&fit=crop&w=900&q=85',
+    image: '/static/images/product-wood.jpg',
     gallery: [
-      imageBase + 'photo-1545241047-6083a3684587?auto=format&fit=crop&w=1200&q=85',
-      imageBase + 'photo-1602523961358-f9f03dd557db?auto=format&fit=crop&w=1200&q=85'
+      '/static/images/product-wood.jpg',
+      '/static/images/product-car.jpg'
     ],
     description: '天然沉香切片打磨而成，茶汤温热时香气更显，兼具器物与收藏价值。'
   }

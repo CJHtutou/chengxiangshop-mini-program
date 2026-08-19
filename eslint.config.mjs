@@ -21,5 +21,11 @@ export default [
       'vue/multi-word-component-names': 'off',
       'vue/no-v-text-v-html-on-component': 'off'
     }
+  },
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: globals.node
+    }
   }
 ]

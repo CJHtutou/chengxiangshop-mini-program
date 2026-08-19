@@ -1,6 +1,6 @@
 # 黑盘羊沉香商城小程序
 
-基于 uni-app（Vue 3）开发的沉香电商用户端，可运行到 H5 与微信小程序。界面参考黑盘羊沉香商城截图，实现首页、品牌历程、商品列表、商品详情、购物车、下单支付模拟、订单追踪、个人中心、地址和设置。
+基于 uni-app（Vue 3）开发的微信小程序商城。界面参考黑盘羊沉香商城截图，实现首页、品牌历程、商品列表、商品详情、购物车、下单支付模拟、订单追踪、个人中心、地址和设置。H5 仅作为可选的浏览器调试方式，不是正式交付端。
 
 ## 技术栈
 
@@ -10,29 +10,37 @@
 - Promise 风格请求封装
 - 本地 RESTful Mock 数据
 
-## 运行
+## 微信小程序运行
 
 ```bash
 npm install
+npm run configure:appid -- wx1234567890abcdef
+npm run dev
+```
+
+将示例 AppID 替换成你在微信公众平台获得的真实小程序 AppID。然后用微信开发者工具导入：
+
+```text
+dist/dev/mp-weixin
+```
+
+没有 AppID 时也可以跳过配置并编译，生成项目会使用 `touristappid`，但无法进行完整真机调试、上传和发布。
+
+可选的 H5 快速预览：
+
+```bash
 npm run dev:h5
 ```
 
 浏览器打开 `http://localhost:5174`。
 
-微信小程序开发模式：
-
-```bash
-npm run dev:mp-weixin
-```
-
-然后用微信开发者工具导入 `dist/dev/mp-weixin`。正式发布前请在 `src/manifest.json` 中填写小程序 AppID。
-
 ## 构建
 
 ```bash
-npm run build:h5
-npm run build:mp-weixin
+npm run build
 ```
+
+正式微信小程序产物位于 `dist/build/mp-weixin`。所有展示图片均已存入 `src/static/images`，不需要配置第三方图片下载域名。
 
 ## Mock 与真实接口
 

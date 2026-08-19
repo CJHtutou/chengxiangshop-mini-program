@@ -50,7 +50,7 @@
     </view>
 
     <view class="story-card pressable" @click="goBrand">
-      <image class="story-card__image" src="https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1200&q=85" mode="aspectFill" />
+      <image class="story-card__image" src="/static/images/hero-brand.jpg" mode="aspectFill" />
       <view class="story-card__scrim" />
       <view class="story-card__content">
         <text class="story-card__eyebrow">黑盘羊沉香 · 始于 2006</text>
@@ -93,17 +93,17 @@ const products = ref([])
 const showCoupon = ref(false)
 const slides = [
   {
-    image: 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1400&q=85',
+    image: '/static/images/hero-brand.jpg',
     title: '老羊黑盘羊沉香',
     copy: '专注野生沉香 19 年 · 每一缕香都有出处'
   },
   {
-    image: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1400&q=85',
+    image: '/static/images/product-incense.jpg',
     title: '一席香事，自在相逢',
     copy: '精选原材 · 手作成香 · 雅集品鉴'
   },
   {
-    image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1400&q=85',
+    image: '/static/images/product-bracelet.jpg',
     title: '天然为本，时间为证',
     copy: '从原材到成品，严守每一道工序'
   }

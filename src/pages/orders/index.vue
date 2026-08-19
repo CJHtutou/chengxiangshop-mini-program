@@ -26,7 +26,7 @@ const tabs = [{ key: 'all', label: '全部' }, { key: 'to_pay', label: '待付�
 const filteredOrders = computed(() => status.value === 'all' ? orders : orders.filter((order) => order.statusKey === status.value))
 
 onLoad(({ status: initialStatus }) => { if (initialStatus) status.value = initialStatus })
-function getThumbs(order) { return [{ image: 'https://images.unsplash.com/photo-1602523961358-f9f03dd557db?auto=format&fit=crop&w=300&q=75' }, ...(order.items > 1 ? [{ image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=300&q=75' }] : [])] }
+function getThumbs(order) { return [{ image: '/static/images/product-car.jpg' }, ...(order.items > 1 ? [{ image: '/static/images/product-bracelet.jpg' }] : [])] }
 function openOrder(id) { uni.navigateTo({ url: `/pages/order-detail/index?id=${id}` }) }
 function repeat(order) { uni.showToast({ title: order.statusKey === 'to_pay' ? '支付功能为模拟流程' : '已为你加入购物车', icon: 'none' }) }
 </script>

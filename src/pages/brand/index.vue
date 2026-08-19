@@ -4,7 +4,7 @@
     <view class="brand-search"><SearchBar v-model="keyword" @search="search" /></view>
 
     <view class="founder">
-      <image class="founder__image" src="https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?auto=format&fit=crop&w=1200&q=85" mode="aspectFill" />
+      <image class="founder__image" src="/static/images/founder.jpg" mode="aspectFill" />
       <view class="founder__scrim" />
       <view class="founder__content">
         <text class="founder__name">老羊</text>
