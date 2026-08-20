@@ -9,19 +9,15 @@
         <button v-if="!auth.authenticated" class="profile-user__login pressable" @click="login">登录</button>
       </view>
       <view class="member-card">
-        <view><text class="member-card__name">{{ storeConfig.storeName }}</text><text class="member-card__meta">{{ storeConfig.config.subtitle }} · 会员日享专属礼遇</text></view>
+        <view><text class="member-card__name">{{ storeConfig.storeName }}</text><text class="member-card__meta">{{ storeConfig.config.subtitle || '商城服务' }}</text></view>
         <uni-icons type="right" size="20" color="#ecd2a3" />
       </view>
-    </view>
-
-    <view class="assets-grid">
-      <view v-for="item in assets" :key="item.label" class="asset pressable"><text class="asset__value">{{ item.value }}</text><text class="asset__label">{{ item.label }}</text></view>
     </view>
 
     <view class="order-panel">
       <view class="panel-heading"><text>我的订单</text><text class="panel-heading__link pressable" @click="goOrders">查看全部订单 <uni-icons type="right" size="16" color="#a2a7a4" /></text></view>
       <view class="order-entry-grid">
-        <view v-for="item in orderEntries" :key="item.key" class="order-entry pressable" @click="goOrders(item.key)"><view class="order-entry__icon"><uni-icons :type="item.icon" size="26" color="#173d35" /></view><text>{{ item.label }}</text><text v-if="item.count" class="order-entry__badge">{{ item.count }}</text></view>
+        <view v-for="item in orderEntries" :key="item.key" class="order-entry pressable" @click="goOrders(item.key)"><view class="order-entry__icon"><uni-icons :type="item.icon" size="26" color="#173d35" /></view><text>{{ item.label }}</text></view>
       </view>
     </view>
 
@@ -44,30 +40,22 @@ import { useStoreConfigStore } from '../../stores/store-config.js'
 const auth = useAuthStore()
 const storeConfig = useStoreConfigStore()
 
-const assets = [
-  { label: '余额', value: '-' },
-  { label: '积分', value: '-' },
-  { label: '权益卡', value: '-' },
-  { label: '优惠券', value: '1' },
-  { label: '钱包', value: '¥' }
-]
 const orderEntries = [
-  { key: 'to_pay', label: '待付款', icon: 'wallet', count: 1 },
-  { key: 'to_ship', label: '待发货', icon: 'paperplane', count: 0 },
-  { key: 'to_receive', label: '待收货', icon: 'truck', count: 1 },
-  { key: 'to_review', label: '待评价', icon: 'chat', count: 0 },
-  { key: 'after_sale', label: '退款/售后', icon: 'help', count: 0 }
+  { key: 'to_pay', label: '待付款', icon: 'wallet' },
+  { key: 'to_ship', label: '待发货', icon: 'paperplane' },
+  { key: 'to_receive', label: '待收货', icon: 'truck' },
+  { key: 'completed', label: '已完成', icon: 'chat' },
+  { key: 'after_sale', label: '退款/售后', icon: 'help' }
 ]
 const menus = [
   { label: '购物车', icon: 'cart', url: '/pages/cart/index' },
   { label: '地址管理', icon: 'location', url: '/pages/address/index' },
-  { label: '任务中心', icon: 'flag', extra: '今日签到可领积分' },
   { label: '设置', icon: 'settings', url: '/pages/settings/index' }
 ]
 
 async function login() { try { await auth.login(); uni.showToast({ title: '登录成功', icon: 'success' }) } catch (error) { uni.showToast({ title: error.message || '登录失败', icon: 'none' }) } }
 function goOrders(status = '') { uni.navigateTo({ url: `/pages/orders/index${status ? `?status=${status}` : ''}` }) }
-function goMenu(item) { if (item.url) uni.navigateTo({ url: item.url }); else uni.showToast({ title: '今日任务已完成', icon: 'success' }) }
+function goMenu(item) { if (item.url) uni.navigateTo({ url: item.url }) }
 </script>
 
 <style scoped lang="scss">

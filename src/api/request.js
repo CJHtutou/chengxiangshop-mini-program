@@ -2,6 +2,7 @@ import { cloudbaseRequest } from './cloudbase-request.js'
 
 const MODE = import.meta.env.VITE_BACKEND_MODE || (import.meta.env.DEV ? 'mock' : 'cloudbase')
 const ACCESS_KEY = 'chengxiang-user-access-token'
+// 生产构建必须走 CloudBase；Mock 仅以动态导入方式存在于开发环境。
 if (import.meta.env.PROD && MODE !== 'cloudbase') throw new Error('生产环境必须设置 VITE_BACKEND_MODE=cloudbase，禁止回退 Mock 或旧 API')
 export const isMockMode = import.meta.env.DEV && MODE === 'mock'
 export const tokenStore = { get: () => uni.getStorageSync(ACCESS_KEY) || '', save: (token) => uni.setStorageSync(ACCESS_KEY, token), clear: () => uni.removeStorageSync(ACCESS_KEY) }

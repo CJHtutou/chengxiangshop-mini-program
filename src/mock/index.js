@@ -10,8 +10,8 @@ export const products = [
   {
     id: 'p-1001',
     categoryId: 'bracelet',
-    title: '黑盘羊香堂 沉水级国奇楠 十全十美碎银沉香车挂件',
-    shortTitle: '国奇楠沉香车挂件',
+    title: '示例商品 A',
+    shortTitle: '示例商品 A',
     price: 38.8,
     originalPrice: 68,
     sold: 213,
@@ -82,8 +82,8 @@ export const products = [
   {
     id: 'p-1005',
     categoryId: 'incense',
-    title: '黑盘羊沉香堂 天然原材线香 30支收藏装',
-    shortTitle: '天然原材线香收藏装',
+    title: '示例商品 E',
+    shortTitle: '示例商品 E',
     price: 128,
     originalPrice: 158,
     sold: 89,
@@ -117,37 +117,20 @@ export const products = [
   }
 ]
 
-export const orders = [
-  { id: 'CX202608190001', user: '林墨', amount: 888, status: '待发货', statusKey: 'to_ship', items: 1, createdAt: '2026-08-19 10:24' },
-  { id: 'CX202608180017', user: '周先生', amount: 437.8, status: '待收货', statusKey: 'to_receive', items: 2, createdAt: '2026-08-18 18:42' },
-  { id: 'CX202608180011', user: '陈女士', amount: 399, status: '已完成', statusKey: 'completed', items: 1, createdAt: '2026-08-18 15:09' },
-  { id: 'CX202608170006', user: '王也', amount: 128, status: '待付款', statusKey: 'to_pay', items: 1, createdAt: '2026-08-17 21:30' },
-  { id: 'CX202608160021', user: '赵可', amount: 1324, status: '已完成', statusKey: 'completed', items: 2, createdAt: '2026-08-16 12:08' }
-]
+export const orders = []
 
-export const users = [
-  { id: 'u-01', name: '林墨', phone: '138****2268', level: '沉香藏家', spent: 6280, joinedAt: '2025-08-16', avatar: '林' },
-  { id: 'u-02', name: '周先生', phone: '186****0914', level: '高级会员', spent: 3120, joinedAt: '2025-10-28', avatar: '周' },
-  { id: 'u-03', name: '陈女士', phone: '139****6612', level: '香事新友', spent: 980, joinedAt: '2026-01-05', avatar: '陈' },
-  { id: 'u-04', name: '王也', phone: '157****7789', level: '香事新友', spent: 460, joinedAt: '2026-03-13', avatar: '王' },
-  { id: 'u-05', name: '赵可', phone: '133****4081', level: '高级会员', spent: 1860, joinedAt: '2026-04-21', avatar: '赵' }
-]
+export const users = []
 
 export const dashboard = {
   metrics: [
-    { label: '本月销售额', value: 128460, prefix: '¥', trend: '+18.6%', tone: 'gold' },
-    { label: '本月订单量', value: 328, prefix: '', trend: '+12.4%', tone: 'green' },
-    { label: '会员总数', value: 12890, prefix: '', trend: '+8.9%', tone: 'blue' },
-    { label: '在售商品', value: 86, prefix: '', trend: '+4.2%', tone: 'red' }
+    { label: '总销售额', value: 0, prefix: '¥', trend: '暂无环比数据', tone: 'gold' },
+    { label: '订单量', value: 0, prefix: '', trend: '暂无环比数据', tone: 'green' },
+    { label: '用户数', value: 0, prefix: '', trend: '暂无环比数据', tone: 'blue' },
+    { label: '商品数', value: 0, prefix: '', trend: '暂无环比数据', tone: 'red' }
   ],
-  sales: [12000, 15600, 13200, 18800, 21600, 20800, 24400, 28600, 27200, 31900, 30500, 35800],
-  salesLabels: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'],
-  categorySales: [
-    { name: '沉香手串', value: 42 },
-    { name: '礼盒臻品', value: 26 },
-    { name: '线香香品', value: 18 },
-    { name: '原材沉香', value: 14 }
-  ]
+  sales: [],
+  salesLabels: [],
+  categorySales: []
 }
 
 export const apiResponse = (data, msg = 'success') => ({ code: 200, data, msg })

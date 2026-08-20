@@ -2,7 +2,11 @@
 import { useStoreConfigStore } from './stores/store-config.js'
 export default {
   onLaunch() {
+    // 仅预热可公开的商城配置；失败时 Store 回退到安全默认值，页面仍可显示错误状态。
     useStoreConfigStore().load()
+  },
+  onShow() {
+    useStoreConfigStore().load(true)
   }
 }
 </script>

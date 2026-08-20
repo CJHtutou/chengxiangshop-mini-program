@@ -10,8 +10,8 @@
 
     <view class="order-card">
       <view class="order-card__brand"><view class="order-card__mark">{{ storeConfig.storeMark }}</view><text>{{ storeConfig.storeName }}</text></view>
-      <view v-for="item in selectedItems" :key="`${item.id}-${item.sku}`" class="order-product">
-        <image :src="item.image" mode="aspectFill" />
+      <view v-for="item in selectedItems" :key="`${item.id}-${item.skuId || 'default'}`" class="order-product">
+        <image v-if="item.image" :src="item.image" mode="aspectFill" /><view v-else class="order-product__placeholder">暂无图片</view>
         <view class="order-product__body"><text class="order-product__title">{{ item.shortTitle || item.title }}</text><text class="order-product__sku">{{ item.sku }}</text><view><text class="order-product__price">¥{{ item.price }}</text><text class="order-product__qty">×{{ item.quantity }}</text></view></view>
       </view>
       <view class="order-row pressable"><text>配送方式</text><text>{{ storeConfig.config.defaultCarrier || '快递配送' }} · ¥{{ (storeConfig.config.defaultShippingCents / 100).toFixed(2) }} <uni-icons type="right" size="15" color="#a0a5a3" /></text></view>
@@ -20,15 +20,11 @@
       <view class="order-card__total">共 {{ cart.selectedCount }} 件，合计 <text>¥{{ payable.toFixed(2) }}</text></view>
     </view>
 
-    <view class="payment-card">
-      <text class="payment-card__title">支付方式</text>
-      <view class="payment-row pressable" @click="payment = 'wechat'"><view class="payment-row__icon payment-row__icon--wechat">W</view><text>微信支付</text><view class="radio" :class="{ 'radio--active': payment === 'wechat' }" /></view>
-      <view class="payment-row pressable" @click="payment = 'balance'"><view class="payment-row__icon">¥</view><text>余额支付</text><view class="radio" :class="{ 'radio--active': payment === 'balance' }" /></view>
-    </view>
+    <view class="payment-card"><text class="payment-card__title">支付方式</text><view class="payment-row"><view class="payment-row__icon payment-row__icon--wechat">W</view><view><text>微信支付</text><text class="payment-row__hint">支付能力暂未开通，订单将保留为待付款</text></view></view></view>
 
     <view class="submit-bar">
       <view><text>应付：</text><text class="submit-bar__price">¥{{ payable.toFixed(2) }}</text></view>
-      <button class="submit-bar__button pressable" :loading="submitting" :disabled="submitting" @click="submit">提交订单</button>
+      <button class="submit-bar__button pressable" :loading="submitting" :disabled="submitting || !storeConfig.config.businessOpen" @click="submit">{{ storeConfig.config.businessOpen ? '提交订单' : '商城暂未营业' }}</button>
     </view>
   </view>
 </template>
@@ -37,7 +33,7 @@
 import { computed, onMounted, ref } from 'vue'
 import MallHeader from '../../components/MallHeader.vue'
 import { useCartStore } from '../../stores/cart.js'
-import { confirmSandboxPayment, createOrder, createPayment, fetchAddresses } from '../../api/mall.js'
+import { createOrder, fetchAddresses } from '../../api/mall.js'
 import { useAuthStore } from '../../stores/auth.js'
 import { useStoreConfigStore } from '../../stores/store-config.js'
 
@@ -46,7 +42,6 @@ const auth = useAuthStore()
 const storeConfig = useStoreConfigStore()
 const address = ref(null)
 const note = ref('')
-const payment = ref('wechat')
 const submitting = ref(false)
 const selectedItems = computed(() => cart.selectedItems.length ? cart.selectedItems : cart.items)
 const payable = computed(() => cart.totalPrice)
@@ -56,11 +51,13 @@ function goAddress() { uni.navigateTo({ url: '/pages/address/index' }) }
 async function submit() {
   if (!selectedItems.value.length) return uni.showToast({ title: '购物车暂无商品', icon: 'none' })
   if (!address.value) return uni.showToast({ title: '请先添加收货地址', icon: 'none' })
+  if (!storeConfig.config.businessOpen) return uni.showToast({ title: '商城暂未营业', icon: 'none' })
   submitting.value = true
   try {
+    // 前端仅生成幂等键和提交商品 ID/数量；最终价格、库存、运费与订单状态由云函数决定。
     const { data: order } = await createOrder({ addressId: address.value.id, items: selectedItems.value.map((item) => ({ productId: item.id, skuId: item.skuId || null, quantity: item.quantity })), idempotencyKey: `mini-${Date.now()}-${Math.random().toString(36).slice(2)}` })
-    const { data: payment } = await createPayment(order.id)
-    uni.showModal({ title: '模拟支付', content: `应付 ¥${((payment.amountCents || order.totalCents || cart.totalPriceCents) / 100).toFixed(2)}，确认完成沙箱支付吗？`, confirmText: '确认支付', success: async ({ confirm }) => { if (!confirm) return; try { await confirmSandboxPayment(payment.paymentId || payment.id); cart.clearSelected(); uni.redirectTo({ url: '/pages/orders/index?status=to_ship' }) } catch (error) { uni.showToast({ title: error.message || '支付失败', icon: 'none' }) } } })
+    cart.clearSelected()
+    uni.showModal({ title: '订单已创建', content: `订单 ${order.orderNo || order.id} 已创建。微信支付暂未开通，请稍后在订单中处理付款。`, showCancel: false, success: () => uni.redirectTo({ url: '/pages/orders/index?status=to_pay' }) })
   } catch (error) { uni.showToast({ title: error.message || '订单创建失败', icon: 'none' }) }
   finally { submitting.value = false }
 }
@@ -80,6 +77,7 @@ async function submit() {
 .order-card__mark { display: flex; width: 48rpx; height: 48rpx; align-items: center; justify-content: center; border-radius: 4rpx; background: #0d2f2b; color: #d7af6b; font-family: "STKaiti", serif; }
 .order-product { display: flex; gap: 18rpx; padding: 18rpx 0; border-top: 1rpx solid #f0f0ee; }
 .order-product > image { width: 164rpx; height: 164rpx; flex: 0 0 auto; border-radius: 6rpx; }
+.order-product__placeholder { display: flex; width: 164rpx; height: 164rpx; flex: 0 0 auto; align-items: center; justify-content: center; border-radius: 6rpx; background: #eff1ef; color: #8b938f; font-size: 21rpx; }
 .order-product__body { display: flex; min-width: 0; flex: 1; flex-direction: column; }
 .order-product__title { display: -webkit-box; overflow: hidden; font-size: 25rpx; line-height: 38rpx; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .order-product__sku { align-self: flex-start; margin-top: 9rpx; padding: 6rpx 9rpx; background: #f3f3f1; color: #919694; font-size: 20rpx; }
@@ -92,12 +90,9 @@ async function submit() {
 .order-card__total { padding-top: 22rpx; border-top: 1rpx solid #f0f0ee; font-size: 23rpx; text-align: right; }
 .order-card__total text { color: #e43a35; font-size: 31rpx; }
 .payment-card__title { display: block; padding-bottom: 12rpx; font-size: 28rpx; font-weight: 600; }
-.payment-row { display: flex; height: 92rpx; align-items: center; gap: 16rpx; border-top: 1rpx solid #f0f0ee; font-size: 25rpx; }
+.payment-row { display: flex; min-height: 92rpx; align-items: center; gap: 16rpx; border-top: 1rpx solid #f0f0ee; font-size: 25rpx; }.payment-row > view:last-child { display: flex; flex-direction: column; }.payment-row__hint { margin-top: 5rpx; color: #8d9591; font-size: 20rpx; }
 .payment-row__icon { display: flex; width: 48rpx; height: 48rpx; align-items: center; justify-content: center; border-radius: 50%; background: #e9e1d4; color: #8b6335; font-weight: 700; }
 .payment-row__icon--wechat { background: #24af55; color: #fff; }
-.payment-row > text { flex: 1; }
-.radio { width: 38rpx; height: 38rpx; border: 2rpx solid #c8ccca; border-radius: 50%; }
-.radio--active { border: 11rpx solid #e43a35; }
 .submit-bar { position: fixed; z-index: 80; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: flex-end; gap: 24rpx; padding: 12rpx 20rpx calc(12rpx + env(safe-area-inset-bottom)); background: #fff; font-size: 24rpx; }
 .submit-bar__price { color: #e43a35; font-size: 34rpx; }
 .submit-bar__button { width: 230rpx; height: 80rpx; margin: 0; border-radius: 40rpx; background: #e43a35; color: #fff; font-size: 27rpx; line-height: 80rpx; }

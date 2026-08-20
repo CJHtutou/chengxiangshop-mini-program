@@ -25,6 +25,7 @@ import { useStoreConfigStore } from '../../stores/store-config.js'
 
 const keyword = ref(''); const content = usePageContentStore(); const storeConfig = useStoreConfigStore()
 onMounted(load)
+// 品牌页只读取公开发布内容；加载失败时由 Store 保留最近一次成功缓存并提供错误状态。
 async function load() { try { await content.loadBrand() } catch { /* state is rendered from store */ } }
 function search() { uni.navigateTo({ url: `/pages/products/index?keyword=${encodeURIComponent(keyword.value)}` }) }
 </script>

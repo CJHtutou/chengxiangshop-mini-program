@@ -43,6 +43,7 @@ const keyword = ref(''); const categories = ref([]); const products = ref([]); c
 const content = usePageContentStore(); const marketing = useMarketingPopupStore()
 const sections = computed(() => content.homeSections)
 const bannerSections = computed(() => sections.value.filter((item) => item.type === 'BANNER'))
+// 下拉刷新同时绕过首页缓存、更新分类/商品，并重新判断当前有效营销弹窗。
 async function loadHome(force = false) { loading.value = true; loadError.value = ''; try { const [, categoryResult, productResult] = await Promise.all([content.loadHome(force), getCategories(), getProducts({ page: 1, pageSize: 20, sort: 'sold' })]); categories.value = categoryResult.data || []; products.value = productResult.data.items || []; await marketing.load() } catch (error) { loadError.value = error.message || '网络异常，请稍后重试' } finally { loading.value = false } }
 onMounted(() => loadHome())
 onPullDownRefresh(async () => { await loadHome(true); uni.stopPullDownRefresh() })

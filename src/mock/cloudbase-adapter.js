@@ -3,8 +3,8 @@ import { mockBrandContent } from '../../../shared/mock/brand.js'
 import { mockHomeContent } from '../../../shared/mock/content.js'
 import { mockMarketingPopup } from '../../../shared/mock/marketing.js'
 
-const config = { version: 1, name: '黑盘羊沉香', subtitle: 'ARGAL · 2006', logoUrl: '', iconUrl: '', description: '天然为本，时间为证', phone: '15625056161', serviceWechat: '', serviceHours: '09:00-21:00', address: '广州市白云区同德街道西城智汇', businessOpen: true, banners: [] }
-const addresses = [{ id: 'mock-address', receiverName: '林墨', phone: '13800138000', province: '广东省', city: '广州市', district: '白云区', detail: '同德街道西城智汇 Park 7 栋', isDefault: true }]
+const config = { version: 1, initialized: true, name: '示例商城', subtitle: 'DEMO STORE', logoUrl: '', iconUrl: '', description: '仅用于本地开发的中性示例配置。', brandSlogan: '', phone: '', serviceWechat: '', serviceHours: '', address: '', businessOpen: true, banners: [] }
+const addresses = []
 
 function parse(url) { const [path, search = ''] = url.split('?'); return { path, query: Object.fromEntries(new URLSearchParams(search)) } }
 function productsPage(query) {
@@ -33,9 +33,9 @@ export async function mockCloudbaseResponse({ url, method = 'GET', data = {} }) 
   if (path.startsWith('/api/addresses/') && method === 'PUT') { const id = path.split('/').pop(); const index = addresses.findIndex((item) => item.id === id); const item = { ...addresses[index], ...data, id }; addresses[index] = item; return item }
   if (path.startsWith('/api/addresses/') && method === 'DELETE') { const index = addresses.findIndex((item) => item.id === path.split('/').pop()); if (index >= 0) addresses.splice(index, 1); return null }
   if (path === '/api/orders' && method === 'GET') return { items: structuredClone(orders), pagination: { total: orders.length } }
-  if (path === '/api/orders' && method === 'POST') return { id: `CX${Date.now()}`, status: 'PENDING_PAYMENT', totalCents: 0 }
+  if (path === '/api/orders' && method === 'POST') return { id: `order-${Date.now()}`, orderNo: `DEMO${Date.now()}`, status: 'PENDING_PAYMENT', totalCents: 0, items: [] }
   if (path.startsWith('/api/orders/') && method === 'GET') return orders.find((item) => item.id === path.split('/').pop())
-  if (path.endsWith('/pay') && method === 'POST') return { id: path.split('/')[3], paymentId: path.split('/')[3], mode: 'sandbox', requiresExplicitConfirmation: true }
+  if (path.endsWith('/pay') && method === 'POST') throw new Error('微信支付暂未开通')
   if (path === '/api/after-sales' && method === 'GET') return { items: [], pagination: { total: 0 } }
   if (path === '/api/after-sales' && method === 'POST') return { id: `after-sale-${Date.now()}`, ...data, status: 'PENDING', createdAt: new Date().toISOString() }
   if (path.startsWith('/api/after-sales/') || path === '/api/cart' || path.startsWith('/api/marketing-popups/')) return null

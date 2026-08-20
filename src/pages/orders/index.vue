@@ -7,9 +7,9 @@
     <view v-if="loading" class="loading-orders"><uni-icons type="spinner-cycle" size="42" color="#b88544" /></view>
     <view v-else-if="filteredOrders.length" class="orders-list">
       <view v-for="order in filteredOrders" :key="order.id" class="order-card pressable" @click="openOrder(order.id)">
-        <view class="order-card__head"><text>订单号：{{ order.id }}</text><text class="order-card__status">{{ order.status }}</text></view>
-        <view class="order-card__body"><view class="order-card__thumbs"><image v-for="(product, index) in getThumbs(order)" :key="index" :src="product.image" mode="aspectFill" /></view><view class="order-card__summary"><text>{{ order.items }} 件商品</text><text class="order-card__amount">实付 <text>¥{{ order.amount.toFixed(2) }}</text></text></view></view>
-        <view class="order-card__foot"><text>{{ order.createdAt }}</text><button class="order-card__button pressable" @click.stop="repeat(order)">{{ order.statusKey === 'to_pay' ? '去付款' : '再次购买' }}</button></view>
+        <view class="order-card__head"><text>订单号：{{ order.displayNo }}</text><text class="order-card__status">{{ order.status }}</text></view>
+        <view class="order-card__body"><view v-if="getThumbs(order).length" class="order-card__thumbs"><image v-for="(product, index) in getThumbs(order)" :key="product.id || index" :src="product.image" mode="aspectFill" /></view><text v-else class="order-card__no-image">暂无商品图片</text><view class="order-card__summary"><text>{{ order.items }} 件商品</text><text class="order-card__amount">实付 <text>¥{{ order.amount.toFixed(2) }}</text></text></view></view>
+        <view class="order-card__foot"><text>{{ order.createdAt }}</text><button class="order-card__button pressable" @click.stop="order.statusKey === 'to_pay' ? paymentUnavailable() : openOrder(order.id)">{{ order.statusKey === 'to_pay' ? '去付款' : '查看详情' }}</button></view>
       </view>
     </view>
     <view v-else-if="error" class="empty-orders"><uni-icons type="info" size="52" color="#c4c9c6" /><text>{{ error }}</text><button @click="load">重试</button></view>
@@ -33,9 +33,9 @@ const filteredOrders = computed(() => status.value === 'all' ? orders.value : or
 onLoad(async ({ status: initialStatus }) => { if (initialStatus) status.value = initialStatus; await load() })
 watch(status, () => { load() })
 async function load() { loading.value = true; error.value = ''; try { orders.value = (await getOrders(status.value === 'all' ? '' : status.value === 'to_pay' ? 'PENDING_PAYMENT' : status.value === 'to_ship' ? 'TO_SHIP' : status.value === 'to_receive' ? 'SHIPPED' : 'COMPLETED')).data } catch (reason) { error.value = reason.message || '订单加载失败' } finally { loading.value = false } }
-function getThumbs(order) { return order.itemsData?.slice(0, 2) || [{ image: '/static/images/product-car.jpg' }, ...(order.items > 1 ? [{ image: '/static/images/product-bracelet.jpg' }] : [])] }
+function getThumbs(order) { return (order.itemsData || []).filter((item) => item.image).slice(0, 2) }
 function openOrder(id) { uni.navigateTo({ url: `/pages/order-detail/index?id=${id}` }) }
-function repeat(order) { uni.showToast({ title: order.statusKey === 'to_pay' ? '支付功能为模拟流程' : '已为你加入购物车', icon: 'none' }) }
+function paymentUnavailable() { uni.showToast({ title: '微信支付暂未开通', icon: 'none' }) }
 </script>
 
 <style scoped lang="scss">
@@ -52,6 +52,7 @@ function repeat(order) { uni.showToast({ title: order.statusKey === 'to_pay' ? '
 .order-card__body { display: flex; align-items: center; padding: 22rpx 0; }
 .order-card__thumbs { display: flex; gap: 10rpx; }
 .order-card__thumbs image { width: 126rpx; height: 126rpx; border-radius: 6rpx; }
+.order-card__no-image { color: #8d9591; font-size: 22rpx; }
 .order-card__summary { display: flex; flex: 1; flex-direction: column; align-items: flex-end; color: #727a77; font-size: 23rpx; }
 .order-card__amount { margin-top: 14rpx; }
 .order-card__amount > text { color: #e43a35; font-size: 31rpx; }

@@ -1,6 +1,6 @@
 <template>
   <view class="product-card pressable" @click="openDetail">
-    <image class="product-card__image" :src="imageSrc" mode="aspectFill" lazy-load @error="imageFailed = true" />
+    <image v-if="imageSrc" class="product-card__image" :src="imageSrc" mode="aspectFill" lazy-load @error="imageFailed = true" /><view v-else class="product-card__image product-card__image--empty">暂无图片</view>
     <view class="product-card__body">
       <text class="product-card__title">{{ product.title }}</text>
       <text class="product-card__rank">{{ product.rank }}</text>
@@ -25,7 +25,7 @@ import { useCartStore } from '../stores/cart.js'
 const props = defineProps({ product: { type: Object, required: true } })
 const cart = useCartStore()
 const imageFailed = ref(false)
-const imageSrc = computed(() => imageFailed.value ? '/static/images/product-wood.jpg' : props.product.image)
+const imageSrc = computed(() => imageFailed.value ? '' : props.product.image)
 
 function formatPrice(price) {
   return Number.isInteger(price) ? price : price.toFixed(1)
@@ -36,6 +36,7 @@ function openDetail() {
 }
 
 function quickAdd() {
+  if (props.product.skus?.some((item) => item.status !== 'DISABLED')) return openDetail()
   cart.add(props.product)
 }
 </script>
@@ -53,6 +54,7 @@ function quickAdd() {
   aspect-ratio: 1 / 1.04;
   background: #e9ece8;
 }
+.product-card__image--empty { display: flex; align-items: center; justify-content: center; color: #89918d; font-size: 22rpx; }
 
 .product-card__body {
   padding: 16rpx 16rpx 18rpx;

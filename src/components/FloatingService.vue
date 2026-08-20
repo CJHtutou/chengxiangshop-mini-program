@@ -5,10 +5,21 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useStoreConfigStore } from '../stores/store-config.js'
+
+const storeConfig = useStoreConfigStore()
+const contactText = computed(() => {
+  const lines = []
+  if (storeConfig.config.serviceHours) lines.push(`客服时间：${storeConfig.config.serviceHours}`)
+  if (storeConfig.config.phone) lines.push(`联系电话：${storeConfig.config.phone}`)
+  if (storeConfig.config.serviceWechat) lines.push(`客服微信：${storeConfig.config.serviceWechat}`)
+  return lines.join('\n') || '客服信息暂未配置'
+})
 function contact() {
   uni.showModal({
     title: '在线客服',
-    content: '客服在线时间 09:00-22:00\n联系电话：15625056161',
+    content: contactText.value,
     confirmText: '知道了',
     showCancel: false
   })

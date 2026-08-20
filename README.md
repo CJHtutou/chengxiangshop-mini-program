@@ -1,81 +1,80 @@
-# 黑盘羊沉香商城小程序
+# 微信小程序端
 
-基于 uni-app（Vue 3）开发的微信小程序商城。界面参考黑盘羊沉香商城截图，实现首页、品牌历程、商品列表、商品详情、购物车、下单支付模拟、订单追踪、个人中心、地址和设置。H5 仅作为可选的浏览器调试方式，不是正式交付端。
+`mini-app` 是商城的 uni-app + Vue 3 微信小程序前端。生产端只通过 `wx.cloud.callFunction` 调用 CloudBase 的 `api` 云函数；H5 仅用于页面预览，不提供可替代的生产请求通道。
 
-## 技术栈
+## 职责与边界
 
-- uni-app + Vue 3
-- Pinia
-- uni-ui
-- Promise 风格请求封装
-- 本地 RESTful Mock 数据
+- 入口：`src/main.js`。仅在 `MP-WEIXIN` 条件编译分支初始化 `wx.cloud`。
+- 请求：`src/api/` 将 REST 风格调用转换为 `{ path, method, query, body }` 的云函数载荷。
+- 状态：`src/stores/` 管理登录外观、购物车、本地短期缓存和弹窗展示状态。
+- 页面与组件：只渲染服务端认可的数据，不能决定订单价格、库存、订单状态、优惠券库存或支付成功。
+- 允许依赖 uni-app、Vue、Pinia、uni-ui 和小程序 CloudBase API；禁止导入 `server/`、直接访问数据库、在生产代码中依赖 `shared/mock`。
 
-## 微信小程序运行
+普通用户身份来自云函数 `cloud.getWXContext().OPENID`。前端传入的 userId、openid、价格和库存均不可信。`requestId` 会附加在云函数错误上，提单时应一并提供该值。
 
-```bash
+## 目录说明
+
+| 目录 | 用途 |
+| --- | --- |
+| `src/platform/` | 小程序 CloudBase 初始化、函数调用和文件上传适配。 |
+| `src/api/` | 云函数请求、商城、内容、营销和媒体接口。 |
+| `src/stores/` | Pinia 状态；页面/商城配置缓存有效期为五分钟。 |
+| `src/pages/` | 小程序页面；首页下拉刷新会刷新发布内容、分类、商品和营销弹窗。 |
+| `src/components/` | 通用、首页、品牌和营销展示组件。 |
+| `src/mock/` | 仅 `VITE_BACKEND_MODE=mock` 的开发模拟数据。 |
+| `dist/build/mp-weixin/` | 编译产物，禁止手工修改。 |
+
+## 环境变量
+
+复制 `.env.example` 为本地环境文件并仅填写真实环境值：
+
+| 变量名 | 是否必填 | 说明 | 示例格式 |
+| --- | --- | --- | --- |
+| `VITE_BACKEND_MODE` | 是 | 生产必须为 `cloudbase`；开发可显式使用 `mock`。 | `cloudbase` |
+| `VITE_CLOUDBASE_ENV_ID` | 生产必填 | 微信云开发环境 ID，由构建注入。 | `env-id` |
+| `VITE_CLOUDBASE_REGION` | 按部署需要 | 环境地域标识，当前运行时代码不直接读取。 | `ap-shanghai` |
+| `VITE_DATA_MODE` | 仅旧开发兼容 | 历史前端变量，生产 CloudBase 请求层不读取。 | `api` |
+| `VITE_API_BASE_URL` | 否 | 旧 Fastify Mock/API 配置，生产 CloudBase 模式禁止依赖。 | `https://...` |
+
+不要在小程序环境变量写入 AppSecret、支付密钥或管理员令牌。
+
+## 本地运行与构建
+
+```powershell
 npm install
+$env:VITE_BACKEND_MODE = 'mock' # 仅本地演示可选
+npm run dev:mp-weixin
+```
+
+生产构建前设置 `VITE_CLOUDBASE_ENV_ID` 和 `VITE_BACKEND_MODE=cloudbase`：
+
+```powershell
+$env:VITE_CLOUDBASE_ENV_ID = '你的环境 ID'
+$env:VITE_BACKEND_MODE = 'cloudbase'
+npm run build:mp-weixin
+```
+
+输出位于 `dist/build/mp-weixin`。根目录 `npm run build:cloud` 会额外复制 `cloudbase/functions` 到该产物的 `cloudfunctions/`，用于微信开发者工具导入和部署。
+
+首次配置 AppID：
+
+```powershell
 npm run configure:appid -- wx1234567890abcdef
-npm run dev
 ```
 
-将示例 AppID 替换成你在微信公众平台获得的真实小程序 AppID。然后用微信开发者工具导入：
+`project.config.json` 的 `cloudfunctionRoot` 指向构建产物中的 `cloudfunctions/`。不要手改构建后的项目配置。
 
-```text
-dist/dev/mp-weixin
+## 测试与常见修改
+
+```powershell
+npm run lint
+npm run test
+npm run test:e2e
 ```
 
-没有 AppID 时也可以跳过配置并编译，生成项目会使用 `touristappid`，但无法进行完整真机调试、上传和发布。
+- 新增公开页面内容：先扩展 `cloudbase/functions/api` 的公开路由，再在 `src/api`、Store、页面组件逐层接入。
+- 修改首页/品牌/弹窗：后端只公开发布快照；小程序只能读取，不应保存草稿。
+- 增加图片：先调用 `uploadCloudFile`，再调用媒体 complete 接口取得 `mediaId`；fileID 不能当永久 URL。
+- 修改下单：保持服务端重算价格和库存。当前下单请求携带 `idempotencyKey`，但云函数尚未落地幂等记录，见 [CloudBase 排障与上线前事项](../docs/cloudbase/TROUBLESHOOTING.md)。
 
-可选的 H5 快速预览：
-
-```bash
-npm run dev:h5
-```
-
-浏览器打开 `http://localhost:5174`。
-
-## 构建
-
-```bash
-npm run build
-```
-
-正式微信小程序产物位于 `dist/build/mp-weixin`。所有展示图片均已存入 `src/static/images`，不需要配置第三方图片下载域名。
-
-## Mock 与真实接口
-
-本地数据位于 `src/mock/index.js`，请求入口位于 `src/api`。接口按照下列资源组织，统一响应格式为 `{ code: 200, data: {}, msg: '' }`：
-
-- `GET /api/products`
-- `GET /api/products/:id`
-- `GET /api/orders`
-- `POST /api/orders`
-- `PATCH /api/cart/:id`
-
-接入后端时，在 `src/api/request.js` 配置 `BASE_URL`，并将 `src/api/mall.js` 中的本地 Mock 调用替换为 `request()`。
-
-## Git 初始化与 Gitee 推送
-
-首次创建仓库时执行：
-
-```bash
-git init
-git add .
-git commit -m "feat: build chengxiangshop mini program"
-git branch -M main
-git remote add origin https://gitee.com/Cjhtutou/chengxiangshop-mini-program.git
-git remote add github https://github.com/CJHtutou/chengxiangshop-mini-program.git
-git push -u origin main
-git push -u github main
-```
-
-本项目目录已完成初始化、提交和远端关联。配置好 Gitee 凭据后，只需执行：
-
-```bash
-git push -u origin main
-git push -u github main
-```
-
-其中 `origin` 对应 Gitee，`github` 对应 GitHub；两边都推送成功后即可保持双仓库同步。
-
-如果远端仓库已有提交，先执行 `git pull --rebase origin main`，解决冲突后再推送；不要使用强制推送覆盖远端历史。
+完整生产部署见 [CloudBase 部署文档](../docs/cloudbase/DEPLOYMENT.md)。

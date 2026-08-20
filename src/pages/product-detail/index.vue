@@ -1,32 +1,31 @@
 <template>
   <view v-if="product" class="detail-page">
     <MallHeader title="商品详情" :show-back="true" />
-    <swiper class="gallery" circular indicator-dots indicator-color="rgba(255,255,255,.55)" indicator-active-color="#e43a35">
+    <swiper v-if="product.gallery.length" class="gallery" circular indicator-dots indicator-color="rgba(255,255,255,.55)" indicator-active-color="#e43a35">
       <swiper-item v-for="image in product.gallery" :key="image">
         <image class="gallery__image" :src="image" mode="aspectFill" @error="imageError(image)" />
       </swiper-item>
     </swiper>
+    <view v-else class="gallery gallery--empty">暂无商品图片</view>
 
     <view class="detail-info">
       <view class="detail-info__price-row">
-        <view><text class="detail-info__currency">¥</text><text class="detail-info__price price-number">{{ product.price }}</text><text class="detail-info__original">¥{{ product.originalPrice }}</text></view>
+        <view><text class="detail-info__currency">¥</text><text class="detail-info__price price-number">{{ displayPrice }}</text><text v-if="selectedSku.originalPriceCents > selectedSku.priceCents" class="detail-info__original">¥{{ (selectedSku.originalPriceCents / 100).toFixed(2) }}</text></view>
         <text class="detail-info__sold">已售 {{ product.sold }}</text>
       </view>
       <text class="detail-info__tag">{{ product.tag }}</text>
       <text class="detail-info__title">{{ product.title }}</text>
-      <view class="detail-info__benefits">
-        <text>正品保障</text><text>·</text><text>产区可溯</text><text>·</text><text>48小时发货</text>
-      </view>
+      <view v-if="servicePromises.length" class="detail-info__benefits"><text v-for="(item, index) in servicePromises" :key="item">{{ index ? `· ${item}` : item }}</text></view>
     </view>
 
     <view class="detail-panel pressable" @click="showSku = true">
       <text class="detail-panel__label">已选</text>
-      <text class="detail-panel__value">{{ selectedSku }}，{{ quantity }}件</text>
+      <text class="detail-panel__value">{{ selectedSku.name }}，{{ quantity }}件</text>
       <uni-icons type="right" size="18" color="#9da29f" />
     </view>
     <view class="detail-panel">
       <text class="detail-panel__label">送至</text>
-      <text class="detail-panel__value">广东省 广州市 白云区 · 现货</text>
+      <text class="detail-panel__value">{{ selectedSku.stock > 0 ? `库存 ${selectedSku.stock} 件` : '暂时缺货' }}{{ product.origin ? ` · ${product.origin}` : '' }}</text>
       <uni-icons type="right" size="18" color="#9da29f" />
     </view>
 
@@ -40,15 +39,10 @@
     </view>
 
     <view class="description">
-      <view class="description__heading"><text>商品详情</text><text>香材与工艺</text></view>
-      <image class="description__hero" :src="product.gallery[1] || product.gallery[0]" mode="aspectFill" />
-      <text class="description__title">天然香韵，缓慢舒展</text>
-      <text class="description__copy">{{ product.description }}</text>
-      <view class="description__feature-grid">
-        <view><text class="description__feature-value">19年</text><text>选香经验</text></view>
-        <view><text class="description__feature-value">100%</text><text>天然原材</text></view>
-        <view><text class="description__feature-value">一物一图</text><text>实物品控</text></view>
-      </view>
+      <view class="description__heading"><text>商品详情</text><text v-if="product.origin">产地与服务</text></view>
+      <image v-if="product.gallery[1] || product.gallery[0]" class="description__hero" :src="product.gallery[1] || product.gallery[0]" mode="aspectFill" />
+      <text v-if="product.description" class="description__copy">{{ product.description }}</text><text v-else class="description__empty">暂无商品详情</text>
+      <view v-if="sellingPoints.length" class="description__feature-grid"><view v-for="point in sellingPoints" :key="point"><text class="description__feature-value">商品卖点</text><text>{{ point }}</text></view></view>
     </view>
 
     <view class="action-bar">
@@ -61,17 +55,17 @@
     <view v-if="showSku" class="sheet-mask" @click.self="showSku = false">
       <view class="sku-sheet">
         <view class="sku-sheet__head">
-          <image :src="product.image" mode="aspectFill" />
-          <view><text class="sku-sheet__price">¥{{ product.price }}</text><text class="sku-sheet__stock">库存 {{ product.stock }} 件</text><text class="sku-sheet__selected">已选：{{ selectedSku }}</text></view>
+          <image v-if="product.image" :src="product.image" mode="aspectFill" /><view v-else class="sku-sheet__placeholder">暂无图片</view>
+          <view><text class="sku-sheet__price">¥{{ displayPrice }}</text><text class="sku-sheet__stock">库存 {{ selectedSku.stock }} 件</text><text class="sku-sheet__selected">已选：{{ selectedSku.name }}</text></view>
           <view class="sku-sheet__close pressable" @click="showSku = false"><uni-icons type="closeempty" size="24" color="#4e5653" /></view>
         </view>
         <text class="sku-sheet__label">规格</text>
         <view class="sku-sheet__options">
-          <view v-for="sku in skuOptions" :key="sku" class="sku-sheet__option pressable" :class="{ 'sku-sheet__option--active': selectedSku === sku }" @click="selectedSku = sku">{{ sku }}</view>
+          <view v-for="sku in skuOptions" :key="sku.id || 'default'" class="sku-sheet__option pressable" :class="{ 'sku-sheet__option--active': selectedSku.id === sku.id }" @click="selectSku(sku)">{{ sku.name }}</view>
         </view>
         <view class="sku-sheet__quantity">
           <text class="sku-sheet__label">数量</text>
-          <view class="stepper"><view class="pressable" @click="quantity = Math.max(1, quantity - 1)">−</view><text>{{ quantity }}</text><view class="pressable" @click="quantity = Math.min(product.stock, quantity + 1)">＋</view></view>
+          <view class="stepper"><view class="pressable" @click="quantity = Math.max(1, quantity - 1)">−</view><text>{{ quantity }}</text><view class="pressable" @click="quantity = Math.min(selectedSku.stock, quantity + 1)">＋</view></view>
         </view>
         <button class="sku-sheet__confirm pressable" @click="confirmSku">确定</button>
       </view>
@@ -81,7 +75,7 @@
 
 <script setup>
 import { onLoad } from '@dcloudio/uni-app'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { getProductDetail } from '../../api/mall.js'
 import MallHeader from '../../components/MallHeader.vue'
 import { useCartStore } from '../../stores/cart.js'
@@ -89,38 +83,50 @@ import { useStoreConfigStore } from '../../stores/store-config.js'
 
 const product = ref(null)
 const showSku = ref(false)
-const selectedSku = ref('标准收藏装')
+const selectedSkuId = ref('')
 const quantity = ref(1)
 const action = ref('cart')
-const skuOptions = ['标准收藏装', '礼赠雅盒', '藏家编号款']
 const cart = useCartStore()
 const storeConfig = useStoreConfigStore()
+const skuOptions = computed(() => {
+  const active = (product.value?.skus || []).filter((item) => item.status !== 'DISABLED')
+  return active.length ? active : [{ id: '', name: '默认规格', priceCents: product.value?.priceCents || 0, originalPriceCents: product.value?.originalPriceCents || product.value?.priceCents || 0, stock: product.value?.stock || 0 }]
+})
+const selectedSku = computed(() => skuOptions.value.find((item) => item.id === selectedSkuId.value) || skuOptions.value[0] || { id: '', name: '默认规格', priceCents: 0, originalPriceCents: 0, stock: 0 })
+const displayPrice = computed(() => (Number(selectedSku.value.priceCents || 0) / 100).toFixed(2))
+const sellingPoints = computed(() => Array.isArray(product.value?.sellingPoints) ? product.value.sellingPoints.filter(Boolean) : String(product.value?.sellingPoints || '').split(/\n|，|,/).map((item) => item.trim()).filter(Boolean))
+const servicePromises = computed(() => Array.isArray(product.value?.servicePromises) ? product.value.servicePromises.filter(Boolean) : String(product.value?.servicePromises || '').split(/\n|，|,/).map((item) => item.trim()).filter(Boolean))
 
 onLoad(async ({ id }) => {
-  try { const { data } = await getProductDetail(id); product.value = data }
+  try { const { data } = await getProductDetail(id); product.value = data; selectedSkuId.value = skuOptions.value[0]?.id || ''; quantity.value = Math.min(1, skuOptions.value[0]?.stock || 1) }
   catch (error) { uni.showModal({ title: '加载失败', content: error.message || '商品信息加载失败', showCancel: false, success: () => uni.navigateBack() }) }
 })
 
 function openSku(type) {
+  if (selectedSku.value.stock <= 0) return uni.showToast({ title: '商品暂时缺货', icon: 'none' })
   action.value = type
   showSku.value = true
 }
 
 function confirmSku() {
-  cart.add(product.value, selectedSku.value, quantity.value)
+  if (selectedSku.value.stock <= 0) return uni.showToast({ title: '商品暂时缺货', icon: 'none' })
+  cart.add({ ...product.value, priceCents: selectedSku.value.priceCents, price: Number(selectedSku.value.priceCents || 0) / 100, stock: selectedSku.value.stock }, selectedSku.value.name, quantity.value, selectedSku.value.id || null)
   showSku.value = false
   if (action.value === 'buy') uni.navigateTo({ url: '/pages/checkout/index' })
 }
 
+function selectSku(sku) { selectedSkuId.value = sku.id || ''; quantity.value = Math.min(Math.max(1, quantity.value), Math.max(1, sku.stock || 1)) }
+
 function goHome() { uni.reLaunch({ url: '/pages/home/index' }) }
 function goBrand() { uni.navigateTo({ url: '/pages/brand/index' }) }
 function goCart() { uni.navigateTo({ url: '/pages/cart/index' }) }
-function imageError(image) { if (!product.value) return; product.value.gallery = product.value.gallery.map((item) => item === image ? '/static/images/product-incense.jpg' : item) }
+function imageError(image) { if (!product.value) return; product.value.gallery = product.value.gallery.filter((item) => item !== image) }
 </script>
 
 <style scoped lang="scss">
 .detail-page { min-height: 100vh; padding-bottom: calc(118rpx + env(safe-area-inset-bottom)); background: #f4f4f2; }
 .gallery { height: 750rpx; background: #e8e8e5; }
+.gallery--empty { display: flex; align-items: center; justify-content: center; color: #868e8a; font-size: 25rpx; }
 .gallery__image { width: 100%; height: 100%; }
 .detail-info { padding: 28rpx 26rpx 26rpx; background: #fff; }
 .detail-info__price-row { display: flex; align-items: flex-end; justify-content: space-between; }
@@ -150,6 +156,7 @@ function imageError(image) { if (!product.value) return; product.value.gallery =
 .description__hero { width: 100%; height: 540rpx; margin-top: 20rpx; border-radius: 6rpx; }
 .description__title { display: block; margin-top: 34rpx; color: #173b34; font-family: "STKaiti", serif; font-size: 42rpx; font-weight: 700; text-align: center; }
 .description__copy { display: block; margin: 18rpx 24rpx 0; color: #646c69; font-size: 26rpx; line-height: 48rpx; text-align: center; }
+.description__empty { display: block; padding: 42rpx 0; color: #8d9591; font-size: 24rpx; text-align: center; }
 .description__feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 38rpx; padding: 26rpx 0; border-top: 1rpx solid #e8e4dc; border-bottom: 1rpx solid #e8e4dc; }
 .description__feature-grid > view { display: flex; flex-direction: column; align-items: center; border-right: 1rpx solid #e8e4dc; color: #818784; font-size: 20rpx; }
 .description__feature-grid > view:last-child { border: 0; }
@@ -164,6 +171,7 @@ function imageError(image) { if (!product.value) return; product.value.gallery =
 .sku-sheet { width: 100%; padding: 28rpx 26rpx calc(26rpx + env(safe-area-inset-bottom)); border-radius: 20rpx 20rpx 0 0; background: #fff; animation: slide-up 220ms ease-out; }
 .sku-sheet__head { position: relative; display: flex; gap: 20rpx; padding-bottom: 34rpx; }
 .sku-sheet__head image { width: 180rpx; height: 180rpx; border-radius: 8rpx; }
+.sku-sheet__placeholder { display: flex; width: 180rpx; height: 180rpx; align-items: center; justify-content: center; border-radius: 8rpx; background: #eff1ef; color: #8c9490; font-size: 22rpx; }
 .sku-sheet__head > view:nth-child(2) { display: flex; flex-direction: column; justify-content: flex-end; }
 .sku-sheet__price { color: #e43a35; font-size: 38rpx; font-weight: 600; }
 .sku-sheet__stock, .sku-sheet__selected { margin-top: 8rpx; color: #858c89; font-size: 22rpx; }
