@@ -1,6 +1,7 @@
 {
   "libVersion": "3.17.1",
   "projectname": "mini-app",
+  "cloudfunctionRoot": "cloudfunctions/",
   "setting": {
     "urlCheck": true,
     "coverView": true,
