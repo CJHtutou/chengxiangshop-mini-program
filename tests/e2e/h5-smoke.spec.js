@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test'
 test('H5 首页加载并可浏览商品', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByText('本周推荐')).toBeVisible()
+  const closePopup = page.getByRole('button', { name: '关闭营销弹窗' })
+  if (await closePopup.isVisible()) await closePopup.click()
   const product = page.locator('.product-card').first()
   await expect(product).toBeVisible()
   await product.click()
