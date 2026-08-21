@@ -21,11 +21,12 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useCartStore } from '../stores/cart.js'
+import { imgUrl } from '../utils/image.js'
 
 const props = defineProps({ product: { type: Object, required: true } })
 const cart = useCartStore()
 const imageFailed = ref(false)
-const imageSrc = computed(() => imageFailed.value ? '' : props.product.image)
+const imageSrc = computed(() => imageFailed.value ? '' : imgUrl(props.product.image, 360))
 
 function formatPrice(price) {
   return Number.isInteger(price) ? price : price.toFixed(1)

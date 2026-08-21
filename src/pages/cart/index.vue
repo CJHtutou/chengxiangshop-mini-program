@@ -7,7 +7,7 @@
         <view class="checkbox pressable" :class="{ 'checkbox--active': item.selected }" @click="cart.toggle(index)">
           <uni-icons v-if="item.selected" type="checkmarkempty" size="17" color="#ffffff" />
         </view>
-        <image class="cart-item__image" :src="item.image" mode="aspectFill" @click="openProduct(item.id)" />
+        <image class="cart-item__image" :src="imgUrl(item.image, 180)" mode="aspectFill" lazy-load @click="openProduct(item.id)" />
         <view class="cart-item__body">
           <text class="cart-item__title" @click="openProduct(item.id)">{{ item.shortTitle || item.title }}</text>
           <text class="cart-item__sku">{{ item.sku }}</text>
@@ -52,6 +52,7 @@ import BottomNav from '../../components/BottomNav.vue'
 import MallHeader from '../../components/MallHeader.vue'
 import ProductCard from '../../components/ProductCard.vue'
 import { useCartStore } from '../../stores/cart.js'
+import { imgUrl } from '../../utils/image.js'
 
 const cart = useCartStore()
 const recommendations = ref([])

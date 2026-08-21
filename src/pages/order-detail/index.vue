@@ -3,8 +3,8 @@
     <MallHeader title="订单详情" :show-back="true" />
     <view class="status-banner"><uni-icons :type="order.statusKey === 'to_receive' ? 'truck' : 'paperplane'" size="31" color="#ecd4a7" /><view><text>{{ order.status }}</text><text>{{ statusCopy }}</text></view></view>
     <view class="detail-address"><uni-icons type="location" size="24" color="#a47a42" /><view v-if="order.addressSnapshot"><text>{{ addressReceiver }}</text><text>{{ addressDetail }}</text></view><text v-else class="empty-text">未保存收货地址快照</text></view>
-    <view class="detail-order-card"><view class="detail-order-card__head"><text>{{ storeConfig.storeName }}</text><text>{{ order.items }} 件商品</text></view><view v-for="item in order.orderItems" :key="item.id" class="detail-order-product"><image v-if="item.image" :src="item.image" mode="aspectFill" /><view v-else class="detail-order-product__placeholder">暂无图片</view><view><text>{{ item.title }}</text><text>{{ item.skuNameSnapshot || '默认规格' }} × {{ item.quantity }}</text><text>¥{{ (item.totalCents / 100).toFixed(2) }}</text></view></view><view v-if="!order.orderItems.length" class="empty-order-items">订单没有商品明细</view><view class="detail-order-total">商品总价 <text>¥{{ order.amount.toFixed(2) }}</text></view></view>
-    <view class="info-card"><view><text>订单编号</text><text>{{ order.displayNo }}</text></view><view><text>创建时间</text><text>{{ order.createdAt }}</text></view><view><text>支付状态</text><text>{{ order.statusKey === 'to_pay' ? '待付款（微信支付暂未开通）' : '已由服务端更新' }}</text></view></view>
+    <view class="detail-order-card"><view class="detail-order-card__head"><text>{{ storeConfig.storeName }}</text><text>{{ order.items }} 件商品</text></view><view v-for="item in order.orderItems" :key="item.id" class="detail-order-product"><image v-if="item.image" :src="imgUrl(item.image, 150)" mode="aspectFill" lazy-load /><view v-else class="detail-order-product__placeholder">暂无图片</view><view><text>{{ item.title }}</text><text>{{ item.skuNameSnapshot || '默认规格' }} × {{ item.quantity }}</text><text>¥{{ (item.totalCents / 100).toFixed(2) }}</text></view></view><view v-if="!order.orderItems.length" class="empty-order-items">订单没有商品明细</view><view class="detail-order-total">商品总价 <text>¥{{ order.amount.toFixed(2) }}</text></view></view>
+    <view class="info-card"><view><text>订单编号</text><text>{{ order.displayNo }}</text></view><view><text>创建时间</text><text>{{ order.createdAt }}</text></view><view><text>支付状态</text><text>{{ order.statusKey === 'to_pay' ? '待付款' : '已支付或由服务端更新' }}</text></view></view>
     <view class="detail-actions"><button class="pressable" :disabled="!canAfterSale" @click="afterSales">申请售后</button><button class="detail-actions__primary pressable" @click="contact">查看物流</button></view>
   </view>
 </template>
@@ -15,13 +15,14 @@ import { computed, ref } from 'vue'
 import { getOrderDetail } from '../../api/mall.js'
 import MallHeader from '../../components/MallHeader.vue'
 import { useStoreConfigStore } from '../../stores/store-config.js'
+import { imgUrl } from '../../utils/image.js'
 
 const order = ref(null)
 const storeConfig = useStoreConfigStore()
 onLoad(async ({ id }) => { try { order.value = (await getOrderDetail(id)).data } catch (error) { uni.showToast({ title: error.message || '订单加载失败', icon: 'none' }) } })
 const addressReceiver = computed(() => order.value?.addressSnapshot ? [order.value.addressSnapshot.receiverName, order.value.addressSnapshot.phone].filter(Boolean).join(' ') : '')
 const addressDetail = computed(() => order.value?.addressSnapshot ? [order.value.addressSnapshot.province, order.value.addressSnapshot.city, order.value.addressSnapshot.district, order.value.addressSnapshot.detail].filter(Boolean).join('') : '')
-const statusCopy = computed(() => ({ to_pay: '订单已创建，微信支付暂未开通', to_ship: '商家将按订单状态安排发货', to_receive: '商品已发出，请留意物流信息', completed: '订单已完成', cancelled: '订单已取消' })[order.value?.statusKey] || '订单状态由服务端同步')
+const statusCopy = computed(() => ({ to_pay: '请在付款截止时间前完成支付', to_ship: '商家将按订单状态安排发货', to_receive: '商品已发出，请留意物流信息', completed: '订单已完成', cancelled: '订单已取消' })[order.value?.statusKey] || '订单状态由服务端同步')
 const canAfterSale = computed(() => ['to_ship', 'to_receive', 'completed'].includes(order.value?.statusKey))
 function contact() { if (!order.value?.carrier || !order.value?.trackingNo) return uni.showToast({ title: '暂无物流信息', icon: 'none' }); uni.showModal({ title: '物流信息', content: `${order.value.carrier}\n${order.value.trackingNo}`, showCancel: false }) }
 function afterSales() { if (!canAfterSale.value) return uni.showToast({ title: '当前订单暂不支持售后', icon: 'none' }); uni.navigateTo({ url: `/pages/after-sales/index?orderId=${order.value.id}` }) }

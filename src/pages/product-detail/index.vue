@@ -3,7 +3,7 @@
     <MallHeader title="商品详情" :show-back="true" />
     <swiper v-if="product.gallery.length" class="gallery" circular indicator-dots indicator-color="rgba(255,255,255,.55)" indicator-active-color="#e43a35">
       <swiper-item v-for="image in product.gallery" :key="image">
-        <image class="gallery__image" :src="image" mode="aspectFill" @error="imageError(image)" />
+        <image class="gallery__image" :src="imgUrl(image, 750)" mode="aspectFill" lazy-load @error="imageError(image)" />
       </swiper-item>
     </swiper>
     <view v-else class="gallery gallery--empty">暂无商品图片</view>
@@ -40,7 +40,7 @@
 
     <view class="description">
       <view class="description__heading"><text>商品详情</text><text v-if="product.origin">产地与服务</text></view>
-      <image v-if="product.gallery[1] || product.gallery[0]" class="description__hero" :src="product.gallery[1] || product.gallery[0]" mode="aspectFill" />
+      <image v-if="product.gallery[1] || product.gallery[0]" class="description__hero" :src="imgUrl(product.gallery[1] || product.gallery[0], 750)" mode="aspectFill" lazy-load />
       <text v-if="product.description" class="description__copy">{{ product.description }}</text><text v-else class="description__empty">暂无商品详情</text>
       <view v-if="sellingPoints.length" class="description__feature-grid"><view v-for="point in sellingPoints" :key="point"><text class="description__feature-value">商品卖点</text><text>{{ point }}</text></view></view>
     </view>
@@ -55,7 +55,7 @@
     <view v-if="showSku" class="sheet-mask" @click.self="showSku = false">
       <view class="sku-sheet">
         <view class="sku-sheet__head">
-          <image v-if="product.image" :src="product.image" mode="aspectFill" /><view v-else class="sku-sheet__placeholder">暂无图片</view>
+          <image v-if="product.image" :src="imgUrl(product.image, 180)" mode="aspectFill" lazy-load /><view v-else class="sku-sheet__placeholder">暂无图片</view>
           <view><text class="sku-sheet__price">¥{{ displayPrice }}</text><text class="sku-sheet__stock">库存 {{ selectedSku.stock }} 件</text><text class="sku-sheet__selected">已选：{{ selectedSku.name }}</text></view>
           <view class="sku-sheet__close pressable" @click="showSku = false"><uni-icons type="closeempty" size="24" color="#4e5653" /></view>
         </view>
@@ -74,11 +74,12 @@
 </template>
 
 <script setup>
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import { getProductDetail } from '../../api/mall.js'
 import MallHeader from '../../components/MallHeader.vue'
 import { useCartStore } from '../../stores/cart.js'
+import { imgUrl } from '../../utils/image.js'
 import { useStoreConfigStore } from '../../stores/store-config.js'
 
 const product = ref(null)
@@ -88,6 +89,7 @@ const quantity = ref(1)
 const action = ref('cart')
 const cart = useCartStore()
 const storeConfig = useStoreConfigStore()
+onShareAppMessage(() => ({ title: product.value?.title || '商品详情', path: `/pages/product-detail/index?id=${product.value?.id || ''}` }))
 const skuOptions = computed(() => {
   const active = (product.value?.skus || []).filter((item) => item.status !== 'DISABLED')
   return active.length ? active : [{ id: '', name: '默认规格', priceCents: product.value?.priceCents || 0, originalPriceCents: product.value?.originalPriceCents || product.value?.priceCents || 0, stock: product.value?.stock || 0 }]

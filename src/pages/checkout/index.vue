@@ -11,7 +11,7 @@
     <view class="order-card">
       <view class="order-card__brand"><view class="order-card__mark">{{ storeConfig.storeMark }}</view><text>{{ storeConfig.storeName }}</text></view>
       <view v-for="item in selectedItems" :key="`${item.id}-${item.skuId || 'default'}`" class="order-product">
-        <image v-if="item.image" :src="item.image" mode="aspectFill" /><view v-else class="order-product__placeholder">暂无图片</view>
+        <image v-if="item.image" :src="imgUrl(item.image, 126)" mode="aspectFill" lazy-load /><view v-else class="order-product__placeholder">暂无图片</view>
         <view class="order-product__body"><text class="order-product__title">{{ item.shortTitle || item.title }}</text><text class="order-product__sku">{{ item.sku }}</text><view><text class="order-product__price">¥{{ item.price }}</text><text class="order-product__qty">×{{ item.quantity }}</text></view></view>
       </view>
       <view class="order-row pressable"><text>配送方式</text><text>{{ storeConfig.config.defaultCarrier || '快递配送' }} · ¥{{ (storeConfig.config.defaultShippingCents / 100).toFixed(2) }} <uni-icons type="right" size="15" color="#a0a5a3" /></text></view>
@@ -20,7 +20,7 @@
       <view class="order-card__total">共 {{ cart.selectedCount }} 件，合计 <text>¥{{ payable.toFixed(2) }}</text></view>
     </view>
 
-    <view class="payment-card"><text class="payment-card__title">支付方式</text><view class="payment-row"><view class="payment-row__icon payment-row__icon--wechat">W</view><view><text>微信支付</text><text class="payment-row__hint">支付能力暂未开通，订单将保留为待付款</text></view></view></view>
+    <view class="payment-card"><text class="payment-card__title">支付方式</text><view class="payment-row"><view class="payment-row__icon payment-row__icon--wechat">W</view><view><text>微信支付</text><text class="payment-row__hint">提交订单后将唤起微信支付</text></view></view></view>
 
     <view class="submit-bar">
       <view><text>应付：</text><text class="submit-bar__price">¥{{ payable.toFixed(2) }}</text></view>
@@ -33,9 +33,10 @@
 import { computed, onMounted, ref } from 'vue'
 import MallHeader from '../../components/MallHeader.vue'
 import { useCartStore } from '../../stores/cart.js'
-import { createOrder, fetchAddresses } from '../../api/mall.js'
+import { createOrder, createPayment, fetchAddresses } from '../../api/mall.js'
 import { useAuthStore } from '../../stores/auth.js'
 import { useStoreConfigStore } from '../../stores/store-config.js'
+import { imgUrl } from '../../utils/image.js'
 
 const cart = useCartStore()
 const auth = useAuthStore()
@@ -56,8 +57,16 @@ async function submit() {
   try {
     // 前端仅生成幂等键和提交商品 ID/数量；最终价格、库存、运费与订单状态由云函数决定。
     const { data: order } = await createOrder({ addressId: address.value.id, items: selectedItems.value.map((item) => ({ productId: item.id, skuId: item.skuId || null, quantity: item.quantity })), idempotencyKey: `mini-${Date.now()}-${Math.random().toString(36).slice(2)}` })
-    cart.clearSelected()
-    uni.showModal({ title: '订单已创建', content: `订单 ${order.orderNo || order.id} 已创建。微信支付暂未开通，请稍后在订单中处理付款。`, showCancel: false, success: () => uni.redirectTo({ url: '/pages/orders/index?status=to_pay' }) })
+    try {
+      const payment = await createPayment(order.id)
+      const paymentData = payment.data?.payment || payment.data
+      await new Promise((resolve, reject) => uni.requestPayment({ ...paymentData, success: resolve, fail: reject }))
+      cart.clearSelected()
+      uni.showModal({ title: '支付成功', content: `订单 ${order.orderNo || order.id} 已支付`, showCancel: false, success: () => uni.redirectTo({ url: `/pages/order-detail/index?id=${order.id}` }) })
+    } catch (paymentError) {
+      if (!paymentError?.errMsg?.includes('cancel')) uni.showToast({ title: paymentError.message || '支付未完成，订单仍保留待付款', icon: 'none' })
+      uni.redirectTo({ url: '/pages/orders/index?status=to_pay' })
+    }
   } catch (error) { uni.showToast({ title: error.message || '订单创建失败', icon: 'none' }) }
   finally { submitting.value = false }
 }

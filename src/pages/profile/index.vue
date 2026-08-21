@@ -54,7 +54,7 @@ const menus = [
 ]
 
 async function login() { try { await auth.login(); uni.showToast({ title: '登录成功', icon: 'success' }) } catch (error) { uni.showToast({ title: error.message || '登录失败', icon: 'none' }) } }
-function goOrders(status = '') { uni.navigateTo({ url: `/pages/orders/index${status ? `?status=${status}` : ''}` }) }
+function goOrders(status = '') { if (status === 'after_sale') return uni.navigateTo({ url: '/pages/after-sales/index' }); uni.navigateTo({ url: `/pages/orders/index${status ? `?status=${status}` : ''}` }) }
 function goMenu(item) { if (item.url) uni.navigateTo({ url: item.url }) }
 </script>
 

@@ -17,7 +17,7 @@ export const getProducts = async (params = {}) => {
   return { ...result, data: { ...payload, items: payload.items.map(withMoney) } }
 }
 export const getProductDetail = async (id) => { const result = await request({ url: `/api/products/${id}` }); return { ...result, data: withMoney(result.data) } }
-export const getOrders = async (status = '') => { const result = await request({ url: `/api/orders${status ? `?status=${status}` : ''}` }); const list = Array.isArray(result.data) ? result.data : result.data.items; return { ...result, data: list.map(withOrderDisplay) } }
+export const getOrders = async (status = '', params = {}) => { const query = queryString({ ...(status ? { status } : {}), page: params.page || 1, pageSize: params.pageSize || 10 }); const result = await request({ url: `/api/orders?${query}` }); const payload = Array.isArray(result.data) ? { items: result.data, pagination: { total: result.data.length, page: 1, pageSize: result.data.length } } : (result.data || { items: [], pagination: {} }); return { ...result, data: { ...payload, items: (payload.items || []).map(withOrderDisplay) } } }
 export const getOrderDetail = async (id) => { const result = await request({ url: `/api/orders/${id}` }); return { ...result, data: withOrderDisplay(result.data) } }
 export const createOrder = (data) => request({ url: '/api/orders', method: 'POST', data })
 export const createPayment = (id) => request({ url: `/api/orders/${id}/pay`, method: 'POST' })

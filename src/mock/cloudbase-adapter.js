@@ -35,7 +35,7 @@ export async function mockCloudbaseResponse({ url, method = 'GET', data = {} }) 
   if (path === '/api/orders' && method === 'GET') return { items: structuredClone(orders), pagination: { total: orders.length } }
   if (path === '/api/orders' && method === 'POST') return { id: `order-${Date.now()}`, orderNo: `DEMO${Date.now()}`, status: 'PENDING_PAYMENT', totalCents: 0, items: [] }
   if (path.startsWith('/api/orders/') && method === 'GET') return orders.find((item) => item.id === path.split('/').pop())
-  if (path.endsWith('/pay') && method === 'POST') throw new Error('微信支付暂未开通')
+  if (path.endsWith('/pay') && method === 'POST') return { timeStamp: String(Math.floor(Date.now() / 1000)), nonceStr: 'mock-nonce', package: 'prepay_id=mock', signType: 'RSA', paySign: 'mock-sign' }
   if (path === '/api/after-sales' && method === 'GET') return { items: [], pagination: { total: 0 } }
   if (path === '/api/after-sales' && method === 'POST') return { id: `after-sale-${Date.now()}`, ...data, status: 'PENDING', createdAt: new Date().toISOString() }
   if (path.startsWith('/api/after-sales/') || path === '/api/cart' || path.startsWith('/api/marketing-popups/')) return null

@@ -19,7 +19,7 @@
 <script setup>
 import { useCartStore } from '../stores/cart.js'
 
-defineProps({ active: { type: String, required: true } })
+const props = defineProps({ active: { type: String, required: true } })
 const cart = useCartStore()
 const navItems = [
   { key: 'home', label: '首页', icon: 'home', url: '/pages/home/index' },
@@ -30,8 +30,8 @@ const navItems = [
 ]
 
 function go(item) {
-  if (item.key === 'active') return
-  uni.reLaunch({ url: item.url })
+  if (item.key === props.active) return
+  uni.switchTab({ url: item.url })
 }
 </script>
 

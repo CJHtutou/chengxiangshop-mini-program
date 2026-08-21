@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+import { onLoad, onPullDownRefresh, onReachBottom, onShareAppMessage } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { getCategories, getProducts } from '../../api/mall.js'
 import BottomNav from '../../components/BottomNav.vue'
@@ -63,6 +63,7 @@ const sort = ref('default')
 const loading = ref(true)
 const filteredProducts = ref([])
 const loadError = ref('')
+onShareAppMessage(() => ({ title: keyword.value ? `搜索：${keyword.value}` : '精选商品', path: `/pages/products/index${keyword.value ? `?keyword=${encodeURIComponent(keyword.value)}` : ''}` }))
 const page = ref(1)
 const hasMore = ref(true)
 const sortItems = [
@@ -78,17 +79,20 @@ onLoad((options) => {
   loadProducts()
 })
 onPullDownRefresh(async () => { await loadProducts(true); uni.stopPullDownRefresh() })
-onReachBottom(() => { if (!loading.value && hasMore.value) { page.value += 1; loadProducts(false) } })
+onReachBottom(() => { if (!loading.value && hasMore.value) loadProducts(false) })
 
 async function loadProducts(resetList = true) {
   loading.value = true
   loadError.value = ''
   if (resetList) page.value = 1
+  const requestPage = page.value
   try {
     if (categories.value.length === 1) { const result = await getCategories(); categories.value = [{ id: 'all', name: '全部商品' }, ...result.data] }
-    const { data } = await getProducts({ page: page.value, pageSize: 10, keyword: keyword.value, categoryId: categoryId.value === 'all' ? '' : categoryId.value, sort: sort.value === 'default' ? 'sort' : sort.value === 'sales' ? 'sold' : sort.value })
+    const { data } = await getProducts({ page: requestPage, pageSize: 10, keyword: keyword.value, categoryId: categoryId.value === 'all' ? '' : categoryId.value, sort: sort.value === 'default' ? 'sort' : sort.value === 'sales' ? 'sold' : sort.value })
     filteredProducts.value = resetList ? data.items : [...filteredProducts.value, ...data.items]
-    hasMore.value = page.value < (data.pagination?.pages || 1)
+    const pages = Number(data.pagination?.pages || Math.ceil(Number(data.pagination?.total || 0) / 10) || 1)
+    hasMore.value = requestPage < pages
+    page.value = requestPage + 1
   } catch (error) { loadError.value = error.message || '商品加载失败' }
   finally { loading.value = false }
 }

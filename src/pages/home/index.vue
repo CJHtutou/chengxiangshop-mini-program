@@ -22,6 +22,7 @@
 </template>
 
 <script setup>
+import { onShareAppMessage } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
 import { onPullDownRefresh } from '@dcloudio/uni-app'
 import BottomNav from '../../components/BottomNav.vue'
@@ -41,6 +42,7 @@ import { usePageContentStore } from '../../stores/page-content.js'
 
 const keyword = ref(''); const categories = ref([]); const products = ref([]); const loadError = ref(''); const loading = ref(true)
 const content = usePageContentStore(); const marketing = useMarketingPopupStore()
+onShareAppMessage(() => ({ title: '商城首页', path: '/pages/home/index' }))
 const sections = computed(() => content.homeSections)
 const bannerSections = computed(() => sections.value.filter((item) => item.type === 'BANNER'))
 // 下拉刷新同时绕过首页缓存、更新分类/商品，并重新判断当前有效营销弹窗。
